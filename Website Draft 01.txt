@@ -1,0 +1,89 @@
+Project Title
+	TxTy - The Textable Walkie-Talkie
+	
+Team Members
+
+Abstract
+	TxTy is textable walkie-talkie. Sometimes you're out and about without service and you need to talk to 
+	your buddy.
+	
+Challenges
+-Software
+	Data transmission - What kind of libraries exist for radio communication
+	Security - Can the data transmission be secure or encrypted
+	Transferring data in a readable format, is ASCII too much?
+	Storing messages - Is an additional peripheral needed to store messages?
+	Properly buffering data
+	Keeping the MCU from wasting excessive power. The battery needs to last.
+	Handling Data transmission errors
+	
+	
+-Hardware
+	Antenna - None of us are experts at wireless communication.
+	Power Supply - We don't want to be plugged in, so we need batteries
+	Screen - Different digital screens need different power levels and data transmission
+	Keyboard - Small keyboards aren't readily available, but there are BlackBerry replacements
+	MCU - Different models exist, one will work best for our project
+	Interference - How badly are these modules affected by other wireless signals?
+	
+	
+Proposed Methods
+-Software
+	There might be libraries already available for use with LoRa, or some other radio communication
+		that would handle data transmission and encryption.
+		
+		
+-Hardware
+	Keyboard - BlackBerry replacements are readily available.
+	Power Supply - Many PSUs are can be found for microcontrollers already.
+	Screen - Many modules can be found for a reasonable price
+	
+
+Monetary Items:
+
+Microcontroller: $5 - $20
+Keyboard module: replacement blackberry keyboard? ~$25
+Screen: ~$10-$20
+Radio module: ~$10-$30
+Batteries and chargers: $20?
+
+Total per unit (worst case scenario): ~$100
+Total per pair: $200
+
+
+Timetable from 2/26
+
+03/01 - 03/05
+
+03/08 - 03/12
+
+03/15 - 03/19
+
+03/22 - 03/26
+
+03/29 - 04/02
+
+04/05 - 04/09
+
+04/12 - 04/16
+
+04/19 - 04/23
+
+04/26 - 04/30
+
+
+Collaboration Plan
+-Communication method:
+	Discord, there's a server. Maybe in person once we have hardware
+	
+-How are you going to resolve conflict?
+	Emergency team meeting to get everyone on board and hear each other out.
+	
+-How are you going to keep good team momentum?
+	A good schedule keeps people on track.
+
+-How are you going to do when members fail progress?
+	Assign a primary and secondary role to each position.
+
+-How are you going to distribute budget?
+	Colton can buy a good chunk of things... Divide up based on project?

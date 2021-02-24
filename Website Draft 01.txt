@@ -2,6 +2,10 @@ Project Title
 	TxTy - The Textable Walkie-Talkie
 	
 Team Members
+	Colton Watson
+	Seth Jackson
+	Phelan Hobbs
+	{THIS COULD BE YOU!!}
 
 Abstract
 	TxTy is textable walkie-talkie. Sometimes you're out and about without service and you need to talk to 

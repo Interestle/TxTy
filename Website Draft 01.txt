@@ -8,7 +8,7 @@ Team Members
 	{THIS COULD BE YOU!!}
 
 Abstract
-	TxTy is textable walkie-talkie. Sometimes you're out and about without service and you need to talk to 
+	TxTy is a textable walkie-talkie. Sometimes you're out and about without service and you need to talk to 
 	your buddy.
 	
 Challenges

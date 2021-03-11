@@ -22,57 +22,126 @@
             padding: 60px 50px;
         }
 
-        .navbar-nav li a:hover, .navbar-nav li.active a {
-            color: #303030 !important;
-            background-color: #fff !important;
+        /* The navigation bar */
+        .navbar {
+            overflow: hidden;
+            background-color: #333;
+            position: fixed; /* Set the navbar to fixed position */
+            top: 0; /* Position the navbar at the top of the page */
+            width: 100%; /* Full width */
         }
 
-        .slideanim {
-            visibility: hidden;
-            visibility: visible\9; /*For old IE browsers IE6-8 */
-        }
-
-            .slideanim.slide {
-                visibility: visible;
-                animation: slide 1s;
-            }
-
-            .slideanim::after {
-                /* useful when its child elements are float:left; */
-                content: "";
-                display: table;
-                clear: both;
-            }
-
-        @keyframes slide {
-            0% {
-                opacity: 0;
-                transform: translateX(-70%);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @media screen and (max-width: 768px) {
-            .col-sm-4 {
+            /* Links inside the navbar */
+            .navbar a {
+                float: left;
+                display: block;
+                color: #f2f2f2;
                 text-align: center;
-                margin: 25px 0;
+                padding: 14px 16px;
+                text-decoration: none;
             }
 
-            .btn-lg {
-                width: 100%;
-                margin-bottom: 35px;
-            }
+                /* Change background on mouse-over */
+                .navbar a:hover {
+                    background: #ddd;
+                    color: black;
+                }
+
+
+        .jumbotron {
+            margin-top: 60px; /* Add a top margin to avoid content overlay */
+            /* background-image: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url("PSPWallDarklogo.jpg"); */
+            background-color: white;
+            color: black;
+            padding: 100px 25px;
+            font-family: Montserrat, sans-serif;
         }
 
-        @media screen and (max-width: 480px) {
-            .logo {
-                font-size: 150px;
-            }
+        .row {
+            text-align: center;
         }
+
+        .container-fluid {
+            padding: 100px 50px;
+            text-align: center;
+        }
+
+        .bg-grey {
+            background-color: #f6f6f6;
+        }
+
+        table, td, th {
+            border: 1px solid black;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .thumbnail {
+            padding: 0 0 15px 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        .item h4 {
+            font-size: 19px;
+            line-height: 1.375em;
+            font-weight: 400;
+            font-style: italic;
+            margin: 70px 0;
+        }
+
+        .item span {
+            font-style: normal;
+        }
+
+        .panel {
+            border: 1px solid #f4511e;
+            border-radius: 0 !important;
+            transition: box-shadow 0.5s;
+        }
+
+            .panel:hover {
+                box-shadow: 5px 0px 40px rgba(0,0,0, .2);
+            }
+
+        .panel-footer .btn:hover {
+            border: 1px solid #f4511e;
+            background-color: #fff !important;
+            color: #f4511e;
+        }
+
+        .panel-heading {
+            color: #fff !important;
+            background-color: blue !important;
+            padding: 25px;
+            border-bottom: 1px solid transparent;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
+            border-bottom-left-radius: 0px;
+            border-bottom-right-radius: 0px;
+        }
+
+        .panel-footer {
+            background-color: white !important;
+        }
+
+            .panel-footer h3 {
+                font-size: 32px;
+            }
+
+            .panel-footer h4 {
+                color: #aaa;
+                font-size: 14px;
+            }
+
+            .panel-footer .btn {
+                margin: 15px 0;
+                background-color: blue;
+                color: #fff;
+            }
     </style>
 </head>
 
@@ -109,13 +178,14 @@
     </div>
 
     <!-- Container (Team Section) -->
-    <div id="about" class="container-fluid">
+    <div id="about" class="container-fluid bg-grey">
         <h3>Team members</h3>
-        <div class="row slideanim">
+        <div class="row">
             <ul>
                 <li>Colton Watson</li>
                 <li>Seth Jackson</li>
                 <li>Phelan Hobbs</li>
+                <li>{THIS COULD BE YOU!!}</li>
             </ul>
         </div>
     </div>
@@ -123,11 +193,11 @@
     <!-- Container (Abstract Section) -->
     <div class="container-fluid">
         <h3>Abstract</h3>
-        <div class="row slideanim">
+        <div class="row">
             <p>
 	    Sometimes you just need to speak to someone silently, but you don’t
 	    have a way to speak to them discretely without having to rely on 
-	    cellular towers. TxtT is designed to avoid that. By using radio 
+	    cellular towers. TxTy is designed to avoid that. By using radio 
 	    frequencies, it can communicate with other devices using the LoRa 
 	    standard. This device would shine in places such as mountains and 
 	    forests where hunters, campers, and back-packers could speak to 
@@ -139,10 +209,10 @@
     </div>
 
     <!-- Container (Challenges Section) -->
-    <div id="challenges" class="container-fluid">
+    <div id="challenges" class="container-fluid bg-grey">
         <h3>Challenges</h3>
-        <div class="row slideanim">
-            <div class="col-sm-4">
+        <div class="row">
+            <div class="col-sm-6">
                 <h4>Software</h4>
                 <p>Data transmission - What kind of libraries exist for radio communication</p>
                 <p>Security - Can the data transmission be secure or encrypted</p>
@@ -151,15 +221,22 @@
                 <p>Properly buffering data</p>
                 <p>Keeping the MCU from wasting excessive power. The battery needs to last.</p>
                 <p>Handling Data transmission errors</p>
+                <p>Make it user friendly.</p>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-6">
                 <h4>Hardware</h4>
                 <p>Antenna - None of us are experts at wireless communication.</p>
                 <p>Power Supply - We don't want to be plugged in, so we need batteries</p>
+                <p>Battery Life – This is already and issue with radios this device needs to be able to last a while.</p>
                 <p>Screen - Different digital screens need different power levels and data transmission</p>
                 <p>Keyboard - Small keyboards aren't readily available, but there are BlackBerry replacements</p>
                 <p>MCU - Different models exist, one will work best for our project</p>
                 <p>Interference - How badly are these modules affected by other wireless signals?</p>
+                <p>Range – It could be hard to stretch the range of the signal far enough for this device to be useful.</p>
+                <p>Silent notification – You don’t want to be hunting and hear a beep.</p>
+                <p>Size – needs to be easy to use not bulky.</p>
+                <p>Cost – Cost is always important to consider.</p>
+
             </div>
             <div class="col-sm-4">
 
@@ -170,15 +247,15 @@
     <!-- Container (Methods Section) -->
     <div id="methods" class="container-fluid">
         <h3>Proposed Methods</h3>
-        <div class="row slideanim">
-            <div class="col-sm-4">
+        <div class="row">
+            <div class="col-sm-6">
                 <h4>Software</h4>
                 <p>
                     There might be libraries already available for use with LoRa, or some other radio communication
                     that would handle data transmission and encryption.
                 </p>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-6">
                 <h4>Hardware</h4>
                 <p>Keyboard - BlackBerry replacements are readily available.</p>
                 <p>Power Supply - Many PSUs are can be found for microcontrollers already.</p>
@@ -191,9 +268,9 @@
     </div>
 
     <!-- Container (Money Section) -->
-    <div id="monetary" class="container-fluid">
+    <div id="monetary" class="container-fluid bg-grey">
         <h3>Monetary Items:</h3>
-        <div class="row slideanim">
+        <div class="row">
             <ul>
                 <li>Microcontroller: $5 - $20</li>
                 <li>Keyboard module: replacement blackberry keyboard? ~$25</li>
@@ -211,130 +288,54 @@
     <!-- Container (Timetable Section) -->
     <div id="timetable" class="container-fluid">
         <h3>Timetable</h3>
-        <div class="row slideanim">
-            <table border="5" cellspacing="0" align="center">
-                <!--<caption>Timetable</caption>-->
-                <tr>
-                    <td align="center" height="50"
-                        width="100">
-                        <br>
-                        <b>Stage/Week</b></br>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>I<br>03/01 - 03/05</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>II<br>03/08 - 03/12</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>III<br>03/15 - 03/19</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>IV<br>03/22 - 03/26</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>V<br>03/29 - 04/02</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>VI<br>04/05 - 04/09</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>VII<br>04/12 - 04/16</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>VII<br>04/19 - 04/23</b>
-                    </td>
-                    <td align="center" height="50"
-                        width="100">
-                        <b>VII<br>04/26 - 04/30</b>
-                    </td>
-                </tr>
-                <tr>
-                    <td align="center" height="50">
-                        <b>Proposal paper</b>
-                    </td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                </tr>
-                <tr>
-                    <td align="center" height="50">
-                        <b>Example</b>
-                    </td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                </tr>
-                <tr>
-                    <td align="center" height="50">
-                        <b>Website</b>
-                    </td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                </tr>
-                <tr>
-                    <td align="center" height="50">
-                        <b>Code</b>
-                    </td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                </tr>
-                <tr>
-                    <td align="center" height="50">
-                        <b>Puting it all together</b>
-                    </td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                    <td align="center" height="50">Name</td>
-                </tr>
-            </table>
-        </div>
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Work</th>
+            </tr>
+            <tr>
+                <td>03/01 - 03/05</td>
+                <td>research and development</td>
+            </tr>
+            <tr>
+                <td>03/08 - 03/12</td>
+                <td>research and development</td>
+            </tr>
+            <tr>
+                <td>03/15 - 03/19</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>03/22 - 03/26</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>03/29 - 04/02</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>04/05 - 04/09</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>04/12 - 04/16</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>04/19 - 04/23</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>04/26 - 04/30</td>
+                <td></td>
+            </tr>
+        </table>
     </div>
 
     <!-- Container (Teamwork Section) -->
-    <div id="team" class="container-fluid">
+    <div id="team" class="container-fluid bg-grey">
         <h3>Teamwork Plan</h3>
-        <div class="row slideanim">
+        <div class="row">
             <div class="col-sm-4">
                 <h4>Communication method:</h4>
                 <p>Discord, there's a server. Maybe in person once we have hardware</p>
@@ -353,6 +354,9 @@
             </div>
             <div class="col-sm-4">
                 <h4>How are you going to distribute budget?</h4>
+                <p>
+                    Colton can buy a good chunk of things... Divide up based on project?
+                </p>
             </div>
         </div>
     </div>
@@ -361,7 +365,7 @@
         <a href="#myPage" title="To Top">
             <span class="fas fa-chevron-circle-up" style="font-size:48px"></span>
         </a>
-        <p>Last update: 02/24/2021</a></p>
+        <p>Last update: 03/11/2021</p>
     </footer>
 
     <script>

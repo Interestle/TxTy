@@ -62,7 +62,7 @@
         }
 
         .container-fluid {
-            padding: 100px 50px;
+            padding: 150px 50px;
             text-align: center;
         }
 
@@ -74,9 +74,8 @@
             border: 1px solid black;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        ul {
+            padding: 20px 30px;
         }
 
         .thumbnail {
@@ -142,6 +141,11 @@
                 background-color: blue;
                 color: #fff;
             }
+
+        table.center {
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 </head>
 
@@ -238,9 +242,6 @@
                 <p>Cost – Cost is always important to consider.</p>
 
             </div>
-            <div class="col-sm-4">
-
-            </div>
         </div>
     </div>
 
@@ -261,9 +262,6 @@
                 <p>Power Supply - Many PSUs are can be found for microcontrollers already.</p>
                 <p>Screen - Many modules can be found for a reasonable price</p>
             </div>
-            <div class="col-sm-4">
-
-            </div>
         </div>
     </div>
 
@@ -271,35 +269,56 @@
     <div id="monetary" class="container-fluid bg-grey">
         <h3>Monetary Items:</h3>
         <div class="row">
-            <ul>
-                <li>Microcontroller: $5 - $20</li>
-                <li>Keyboard module: replacement blackberry keyboard? ~$25</li>
-                <li>Screen: ~$10-$20</li>
-                <li>Radio module: ~$10-$30</li>
-                <li>Batteries and chargers: $20?</li>
-            </ul>
-            <ul>
-                <li>Total per unit (worst case scenario): ~$100</li>
-                <li>Total per pair: $200</li>
-            </ul>
+            <div class="col-sm-6">
+                <ul>
+                    <li>Microcontroller: $5 - $20</li>
+                    <li>Keyboard module: replacement blackberry keyboard? ~$25</li>
+                    <li>Screen: ~$10-$20</li>
+                    <li>Radio module: ~$10-$30</li>
+                    <li>Batteries and chargers: $20?</li>
+                </ul>
+            </div>
+            <div class="col-sm-6">
+                <ul>
+                    <li>Total per unit (worst case scenario): ~$100</li>
+                    <li>Total per pair: $200</li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <!-- Container (Timetable Section) -->
-    <div id="timetable" class="container-fluid">
+    <div id="timetable" class="container-fluid center">
         <h3>Timetable</h3>
-        <table>
+        <table class="center">
             <tr>
                 <th>Date</th>
                 <th>Work</th>
             </tr>
             <tr>
+                <td>02/26</td>
+                <td>
+                    <ul>
+                        <li>Project Website Online - v1</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
                 <td>03/01 - 03/05</td>
-                <td>research and development</td>
+                <td>
+                    <ul>
+                        <li>research</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>03/08 - 03/12</td>
-                <td>research and development</td>
+                <td>
+                    <ul>
+                        <li>research</li>
+                        <li>Project Website Online - v2</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>03/15 - 03/19</td>
@@ -307,27 +326,46 @@
             </tr>
             <tr>
                 <td>03/22 - 03/26</td>
-                <td></td>
+                <td>
+                    <ul>
+                        <li>Project Website Online - v3</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>03/29 - 04/02</td>
-                <td></td>
+                <td>
+                    <ul>
+                        <li>EE Technical Open House</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>04/05 - 04/09</td>
-                <td></td>
+                <td>
+                </td>
             </tr>
             <tr>
                 <td>04/12 - 04/16</td>
-                <td></td>
+                <td>
+                    <ul>
+                        <li>Final Project Presentations</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>04/19 - 04/23</td>
-                <td></td>
+                <td>
+                    <ul>
+                        <li>Final Project Presentations</li>
+                        <li>Full Proposal</li>
+                    </ul>
+                </td>
             </tr>
             <tr>
                 <td>04/26 - 04/30</td>
-                <td></td>
+                <td>
+                </td>
             </tr>
         </table>
     </div>
@@ -355,7 +393,7 @@
             <div class="col-sm-4">
                 <h4>How are you going to distribute budget?</h4>
                 <p>
-                    Colton can buy a good chunk of things... Divide up based on project?
+                    Divided based on Job.
                 </p>
             </div>
         </div>

@@ -161,6 +161,9 @@
                 <a class="nav-link" href="#challenges">CHALLENGES</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="#questions">QUESTIONS</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="#methods">PROPOSED METHODS</a>
             </li>
             <li class="nav-item">
@@ -199,16 +202,16 @@
         <h3>Abstract</h3>
         <div class="row">
             <p>
-	    Sometimes you just need to speak to someone silently, but you don’t
-	    have a way to speak to them discretely without having to rely on 
-	    cellular towers. TxTy is designed to avoid that. By using radio 
-	    frequencies, it can communicate with other devices using the LoRa 
-	    standard. This device would shine in places such as mountains and 
-	    forests where hunters, campers, and back-packers could speak to 
-	    each other silently. It could also be used in survival situations 
-	    where communication could be made to rescue teams, for transmitting
-	    data such as GPS coordinates. 
-	    </p>
+                Sometimes you just need to speak to someone silently, but you don’t
+                have a way to speak to them discretely without having to rely on
+                cellular towers. TxTy is designed to avoid that. By using radio
+                frequencies, it can communicate with other devices using the LoRa
+                standard. This device would shine in places such as mountains and
+                forests where hunters, campers, and back-packers could speak to
+                each other silently. It could also be used in survival situations
+                where communication could be made to rescue teams, for transmitting
+                data such as GPS coordinates.
+            </p>
         </div>
     </div>
 
@@ -218,29 +221,72 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4>Software</h4>
-                <p>Data transmission - What kind of libraries exist for radio communication</p>
-                <p>Security - Can the data transmission be secure or encrypted</p>
+                <p>Data transmission - What kind of libraries exist for radio communication.</p>
+                <p>Security - Can the data transmission be secure or encrypted.</p>
                 <p>Transferring data in a readable format, is ASCII too much?</p>
                 <p>Storing messages - Is an additional peripheral needed to store messages?</p>
-                <p>Properly buffering data</p>
+                <p>Properly buffering data.</p>
                 <p>Keeping the MCU from wasting excessive power. The battery needs to last.</p>
-                <p>Handling Data transmission errors</p>
+                <p>Handling Data transmission errors.</p>
                 <p>Make it user friendly.</p>
             </div>
             <div class="col-sm-6">
                 <h4>Hardware</h4>
                 <p>Antenna - None of us are experts at wireless communication.</p>
-                <p>Power Supply - We don't want to be plugged in, so we need batteries</p>
+                <p>Power Supply - We don't want to be plugged in, so we need batteries.</p>
                 <p>Battery Life – This is already and issue with radios this device needs to be able to last a while.</p>
-                <p>Screen - Different digital screens need different power levels and data transmission</p>
-                <p>Keyboard - Small keyboards aren't readily available, but there are BlackBerry replacements</p>
-                <p>MCU - Different models exist, one will work best for our project</p>
+                <p>Chat History - To store at least a few texts.</p>
+                <p>SOS - Some way to call for help when you are injured and cannot use the keyboard.</p>
+                <p>Screen - Different digital screens need different power levels and data transmission.</p>
+                <p>Keyboard - Small keyboards aren't readily available, but there are BlackBerry replacements.</p>
+                <p>MCU - Different models exist, one will work best for our project.</p>
                 <p>Interference - How badly are these modules affected by other wireless signals?</p>
                 <p>Range – It could be hard to stretch the range of the signal far enough for this device to be useful.</p>
                 <p>Silent notification – You don’t want to be hunting and hear a beep.</p>
                 <p>Size – needs to be easy to use not bulky.</p>
                 <p>Cost – Cost is always important to consider.</p>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- Container (Questions Section) -->
+    <div id="questions" class="container-fluid bg-grey">
+        <h3>Questions</h3>
+        <div class="row">
+            <div class="col-sm-6">
+                <h4>What is the benefits over regular walkie talkie:</h4>
+                <p>
+                    This can be used for Silent communication. 
+                    As stated this device is for hunters, campers, and back-packers 
+                    who want could speak to each other silently.
+                    Also, sometimes it’s hard to hear clearly over the radio and this
+                    device is focusing on making sure the message is sent with no errors.
+                </p>
+                <h4>Benefits over pager:</h4>
+                <p>
+                    The main issue with pagers were that a message was one way.
+                    You could send someone a message but they couldn't respond the same way.
+                    This device will have Bi-directional communication. The pager didn't have
+                    great range without going though a tower but this device is designed to go
+                    several miles.
+                </p>
+            </div>
+            <div class="col-sm-6">
+                <h4>Mesh network:</h4>
+                <p>
+                    We currently do not plan to have anything other then the line of sight radio signal.
+                    One idea was using each device to resend the signal it receives but no actual mesh network
+                    or IOT ideas right now. However, it is definatly something we should research to help increase
+                    the range.
+                </p>
+                <h4>Batteries:</h4>
+                <p>
+                    We need to find a way to keep the battery alive as long as possible. The current modules we are
+                    looking at will last at least a few hours and we can turn off parts of the system when they are not needed.
+                    One idea was using some type of rechargable batteries to keep it going. We have not considered solar power
+                    but it is somthing to consider.
+                </p>
             </div>
         </div>
     </div>
@@ -258,9 +304,11 @@
             </div>
             <div class="col-sm-6">
                 <h4>Hardware</h4>
+                <p>Blinking Led - for a silent notification.</p>
+                <p>Storage - the raspberry pi we are looking at has a decent amount of ram.</p>
                 <p>Keyboard - BlackBerry replacements are readily available.</p>
                 <p>Power Supply - Many PSUs are can be found for microcontrollers already.</p>
-                <p>Screen - Many modules can be found for a reasonable price</p>
+                <p>Screen - Many modules can be found for a reasonable price.</p>
             </div>
         </div>
     </div>
@@ -403,7 +451,7 @@
         <a href="#myPage" title="To Top">
             <span class="fas fa-chevron-circle-up" style="font-size:48px"></span>
         </a>
-        <p>Last update: 03/11/2021</p>
+        <p>Last update: 03/12/2021</p>
     </footer>
 
     <script>

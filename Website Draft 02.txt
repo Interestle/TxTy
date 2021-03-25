@@ -1,0 +1,57 @@
+Job Titles
+	Colton: Project Lead
+	Phelan: Software Dev.
+	Seth: 	Software Dev.
+	
+Proper Prototype
+
+	We will have two devices with radio modules. The master device will send a byte of data to the slave device through radio, 
+	and the slave device will respond by lighting an led connected to the board. If time permits, we will have the slave
+	device send the byte back to the master device.
+	
+
+Finalize Timeline
+
+	Good up to Project website v3.
+	
+	Need:
+		Timeline for project.
+		
+	Idea:
+	
+		
+	April
+		Prototype 
+		Wireless module v1: sending simple message
+		
+	May
+		Screen v1: controllable screen
+		Addition wireless improvements (range, speed, etc.)
+		Research keyboard
+		
+	June
+		Keyboard
+		Case/enclosure - Learn some 3D printing
+	
+	July 
+		Battery/charger pack
+		Screen v2: Actual chat feature
+	
+	August
+		Combining modules into one package
+		CS 4992 Starts
+	
+	September
+		Case/enclosure
+		Encryption, security
+	
+	October
+		Debug and refine
+	
+	November
+		Debug and refine
+	
+	December 
+		Finalize product
+		Demo Day
+	

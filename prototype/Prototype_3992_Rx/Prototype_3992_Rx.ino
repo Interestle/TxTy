@@ -1,5 +1,6 @@
 /*
-   This sketch is used for receiving data. Hook up LEDs to this to receive from the other board. I'm using my UNO for this.
+   This sketch is used for receiving data. Hook up LEDs to this to receive 
+   from the other board. I'm using my UNO for this.
 */
 
 /* LED pins */

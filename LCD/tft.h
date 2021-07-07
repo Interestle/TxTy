@@ -13,6 +13,7 @@
 #define TFTWIDTH = 240
 #define TFTHEIGHT = 320
 
+// Test comment
 
 /* Various Commands that the ST7789 Understands */
 

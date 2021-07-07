@@ -1,6 +1,6 @@
 /******************************************************************************
   This library is an amalgamation of a few different libraries I found to 
-  interface with our tft displays. I wanted it to be designed in such a way
+  interface with our lcd displays. I wanted it to be designed in such a way
   that a limited number of header files was included, and I wasn't impressed 
   the source code that was supplied with the displays. 
   
@@ -9,11 +9,19 @@
 	Adafruit's GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
 	Waveshare 2" LCD wiki: https://www.waveshare.com/wiki/2inch_LCD_Module
 ******************************************************************************/
+/* Physical dimensions of the LCD module */
 
-#define TFTWIDTH = 240
-#define TFTHEIGHT = 320
+#define LCDWIDTH  = 240
+#define LCDHEIGHT = 320
 
-// Test comment
+/* Pin definitions for the connectors. Uses the same ones from waveshare *
+ * Note that these are not the physical pins, but the GPIO pins          */
+
+/*                GPIO -  Physical */
+#define LCD_CS  =  8    /* 24 */
+#define LCD_DC  = 25    /* 22 */
+#define LCD_RST = 27    /* 13 */
+#define LCD BL  = 18    /* 12 */
 
 /* Various Commands that the ST7789 Understands */
 

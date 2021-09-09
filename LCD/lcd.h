@@ -10,6 +10,10 @@
 	Waveshare 2" LCD wiki: https://www.waveshare.com/wiki/2inch_LCD_Module
 ******************************************************************************/
 
+/* Dependencies */
+/* TODO: Need to figure out how to use properly */
+/* #include <wiringPi.h> */
+/* #include <wiringPiSPI.h> */
 
 /* Physical dimensions of the LCD module */
 

@@ -82,6 +82,74 @@
 #define ST7789_RDID4     0xDD /* Read ID4 */
 
 
+void LCD_init(void)
+{
+  LCD_reset();
 
+  /* The 'Adafruit' way:
+  LCD_write_command(ST7789_SWRESET);
+  delay(150);
+  LCD_write_command(ST7789_SLPOUT);
+  delay(10);
+  */
+  
+  /* Let's start with how Waveshare does things and go from there. */
+  LCD_write_command(ST7789_COLMOD);
+  LCD_write_command(0x65); /* 262K of 16-bit RGB */
 
+  LCD_write_command(ST7789_MADCTL);
+  LCD_write_data(0x00); /* Top to Bottom, Left to Right, ... */
 
+  LCD_write_command(ST7789_CASET);
+  LCD_write_data(0x00);
+  LCD_write_data(0x00);
+  LCD_write_data(0x01);
+  LCD_write_data(0x3F); /* How Waveshare does it ? */
+
+  LCD_write_command(ST7789_RASET);
+  LCD_write_data(0x00);
+  LCD_write_data(0x00);
+  LCD_write_data(0x00);
+  LCD_write_data(239); /* How Waveshare does it */
+
+  /* waveshare does a bunch of random commands, like positive voltage gamma control
+     that Adafruit doesn't do. Why?
+  */
+
+  LCD_write_command(ST7789_SLPOUT);
+  LCD_write_command(ST7789_DISPON);
+}
+
+/*
+ * Hardware Reset
+ */
+static void LCD_reset(void)
+{
+  digitalWrite(LCD_CS, 0);
+  delay(99);
+  digitalWrite(LCD_RST, -1);
+  delay(99);
+  digitalWrite(LCD_RST, 0);
+  delay(99);
+}
+
+/*
+ * Write a command to the LCD Panel
+ */
+static void LCD_write_command(uint8_t data)
+{
+  digitalWrite(LCD_CS, 0);
+  digitalWrite(LCD_DC, 0);
+  wiringPiSPIDataRW(0, &data, 1);
+}
+
+/*
+ * Write a byte of data to the LCD
+ */
+static void LCD_write_data(uint8_t data)
+{
+  digitalWrite(LCD_CS, 0);
+  digitalWrite(LCD_DC, 1);
+  wiringPiSPIDataRW(0, &data, 1);
+  digitalWrite(LCD_CS, 1);
+}

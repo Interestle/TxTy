@@ -1,3 +1,5 @@
+#ifndef LCD_H
+#define LCD_H
 /******************************************************************************
   This library is an amalgamation of a few different libraries I found to 
   interface with our lcd displays. I wanted it to be designed in such a way
@@ -12,8 +14,8 @@
 
 /* Dependencies */
 /* TODO: Need to figure out how to use properly */
-/* #include <wiringPi.h> */
-/* #include <wiringPiSPI.h> */
+#include <wiringPi.h> 
+#include <wiringPiSPI.h> 
 
 /* Physical dimensions of the LCD module */
 
@@ -76,46 +78,90 @@
 #define ST7789_WRCABCMB  0x5E /* Write CABC Minimum Brightness */
 #define ST7789_RDCABCMB  0x5F /* Read CABC Minimum Brightness */
 #define ST7789_RDABCSDR  0x68 /* Read Automatic Brightness Control Self-Diagnostic Result */
+#define ST7789_PORCTRL   0xB2 /* Porch Setting */
+#define ST7789_GCTRL     0xB7 /* Gate Control */
+#define ST7789_VCOMS     0xBB /* VCOM Setting */
+#define ST7789_LCMCTRL   0xC0 /* LCM Control */
+#define ST7789_VDVVRHEN  0xC2 /* VDV and VRH Command Enable */
+#define ST7789_VRHS      0xC3 /* VRH Set */
+#define ST7789_VDVS      0xC4 /* VDV Set */
 #define ST7789_RDID1     0xDA /* Read ID1 */
 #define ST7789_RDID2     0xDB /* Read ID2 */
 #define ST7789_RDID3     0xDC /* Read ID3 */
 #define ST7789_RDID4     0xDD /* Read ID4 */
 
 
+/*
+ * LCD Register initialization. 
+ */
 void LCD_init(void)
 {
   LCD_reset();
-
-  /* The 'Adafruit' way:
-  LCD_write_command(ST7789_SWRESET);
-  delay(150);
-  LCD_write_command(ST7789_SLPOUT);
-  delay(10);
-  */
   
   /* Let's start with how Waveshare does things and go from there. */
   LCD_write_command(ST7789_COLMOD);
-  LCD_write_command(0x65); /* 262K of 16-bit RGB */
+  LCD_write_command(0x05); /* Adafruit does it as 0x55 */
 
   LCD_write_command(ST7789_MADCTL);
-  LCD_write_data(0x00); /* Top to Bottom, Left to Right, ... */
+  LCD_write_data(0x00); /* Adafruit initially sends it 0x08 */
 
   LCD_write_command(ST7789_CASET);
   LCD_write_data(0x00);
   LCD_write_data(0x00);
-  LCD_write_data(0x01);
-  LCD_write_data(0x3F); /* How Waveshare does it ? */
+  LCD_write_data(0x01); /* Adafruit uses 0 */
+  LCD_write_data(0x3F); /* 63, Adafruit uses 240 ??? */
 
   LCD_write_command(ST7789_RASET);
   LCD_write_data(0x00);
   LCD_write_data(0x00);
+  LCD_write_data(0x00); /* Adafruit: 320 >>8 */
+  LCD_write_data(0xEF); /* 239, Adafruit: 320 & 0xFF (0x40) ??? */
+
+  /* Porch Setting, the manual has it this sequence at power on, Adafruit * 
+   * doesn't mess with it, but waveshare does. Need to check later        */
+  LCD_write_command(ST7789_PORCTRL);
+  LCD_write_data(0x0C);
+  LCD_write_data(0x0C);
   LCD_write_data(0x00);
-  LCD_write_data(239); /* How Waveshare does it */
+  LCD_write_data(0x33);
+  LCD_write_data(0x33);
 
-  /* waveshare does a bunch of random commands, like positive voltage gamma control
-     that Adafruit doesn't do. Why?
-  */
+  /* waveshare also sets this to its initial value of 0x35                 *
+   * VGH should be 13.26 V, VGL should be -10.43 V ... Whatever that means */
+  LCD_write_command(ST7789_GCTRL);
+  LCD_write_data(0x35);
 
+  /* Again, something waveshare does. They set VCOM to 0.85 V.                *
+   * I don't know why, I don't know what it does. Regardless, here we are.    */
+  LCD_write_command(ST7789_VCOMS);
+  LCD_write_data(0x1F);
+ 
+  /* Default power settings again */
+  LCD_write_command(ST7789_LCMCTRL);
+  LCD_write_data(0x2C);
+
+  /* Now this command makes no sense and was also copied from waveshare.           *
+   * What makes it weird is that it needs 2 commands, but waveshare only does one. *
+   * Because of that, I'm actually just going to comment this one out and find     *
+   * out if it's really needed.                                                    *
+   * LCD_write_command(ST7789_VDVVRHEN);                                           *
+   * LCD_write_data(0x01);                                                         */
+
+  /* One of the few things waveshare deviates from. Why? */
+  LCD_write_command(ST7789_VRHS);
+  LCD_write_data(0x12); /* Default is 0x0B */
+
+  LCD_write_command(ST7789_VDVS);
+  LCD_write_data(0x20); /* Default value */
+
+  /* I'm going to go through waveshare's stuff for the defaults, and just *
+   * list them instead of writing them.                                   *
+   * FRCTRL2 - Frame Rate Control. Defaults to 60 Hz, waveshare set to 60 *
+   * PWECTRL1 - Power Control 1, defaults to 0xA4, 0xA1. Normal           *
+   * PVGAMCTRL - Positive Voltage Gamma Control. Requires PHD to understand *
+   * NVGAMCTRL - Negative Voltage Gamma Control. See above                */
+
+  LCD_write_command(ST7789_INVON); /* Adafruit comments just hack on this, so it's needed? */
   LCD_write_command(ST7789_SLPOUT);
   LCD_write_command(ST7789_DISPON);
 }
@@ -126,11 +172,11 @@ void LCD_init(void)
 static void LCD_reset(void)
 {
   digitalWrite(LCD_CS, 0);
-  delay(99);
-  digitalWrite(LCD_RST, -1);
-  delay(99);
+  delay(100);
+  digitalWrite(LCD_RST, 1);
+  delay(100);
   digitalWrite(LCD_RST, 0);
-  delay(99);
+  delay(100);
 }
 
 /*
@@ -153,3 +199,6 @@ static void LCD_write_data(uint8_t data)
   wiringPiSPIDataRW(0, &data, 1);
   digitalWrite(LCD_CS, 1);
 }
+
+
+#endif /* !LCD_H */

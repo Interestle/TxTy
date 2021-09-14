@@ -1,5 +1,5 @@
-#ifndef LCD_H
-#define LCD_H
+#ifndef _LCD_H_
+#define _LCD_H_
 /******************************************************************************
   This library is an amalgamation of a few different libraries I found to 
   interface with our lcd displays. I wanted it to be designed in such a way
@@ -13,7 +13,11 @@
 ******************************************************************************/
 
 /* Dependencies */
-/* TODO: Need to figure out how to use properly */
+
+#include <stdint.h> /* Just so I can use integer types properly */
+
+/* When compiling, add -lwiringPi as a flag i.e gcc -Wall -lwiringpi code.c *
+ * Make sure to run the executable with root priviledge!                    */
 #include <wiringPi.h> 
 #include <wiringPiSPI.h> 
 
@@ -26,10 +30,10 @@
  * Note that these are not the physical pins, but the GPIO pins          */
 
 /*              GPIO -  Physical */
-#define LCD_CS   8    /* 24 */
-#define LCD_DC  25    /* 22 */
-#define LCD_RST 27    /* 13 */
-#define LCD BL  18    /* 12 */
+#define LCD_CS   8      /* 24 */
+#define LCD_DC  25      /* 22 */
+#define LCD_RST 27      /* 13 */
+#define LCD_BL  18      /* 12 */
 
 /* Various Commands that the ST7789 Understands */
 
@@ -91,11 +95,71 @@
 #define ST7789_RDID4     0xDD /* Read ID4 */
 
 
+/*****************************************************************************
+ * Functions
+ *****************************************************************************/
+
+/*
+ * Set the pins, and SPI device. 
+ */
+static void module_init(void)
+{
+  pinMode(LCD_RST, OUTPUT);
+  pinMode(LCD_DC,  OUTPUT);
+  pinMode(LCD_CS,  OUTPUT);
+  pinMode(LCD_BL,  OUTPUT);
+
+  /* Enable the backlight from the get go. */
+  digitalWrite(LCD_BL, 1);
+
+  /* Use the max speed. waveshare uses 60MHz, but RPi doesn't support that? */
+  wiringPiSPISetup(0, 32000000);
+}
+
+
+/*
+ * Hardware Reset
+ */
+static void LCD_reset(void)
+{
+  digitalWrite(LCD_CS, 0);
+  delay(100);
+  digitalWrite(LCD_RST, 1);
+  delay(100);
+  digitalWrite(LCD_RST, 0);
+  delay(100);
+}
+
+
+/*
+ * Write a command to the LCD Panel
+ */
+static void LCD_write_command(uint8_t data)
+{
+  digitalWrite(LCD_CS, 0);
+  digitalWrite(LCD_DC, 0);
+  wiringPiSPIDataRW(0, &data, 1);
+}
+
+/*
+ * Write a byte of data to the LCD
+ */
+static void LCD_write_data(uint8_t data)
+{
+  digitalWrite(LCD_CS, 0);
+  digitalWrite(LCD_DC, 1);
+  wiringPiSPIDataRW(0, &data, 1);
+  digitalWrite(LCD_CS, 1);
+}
+
+
+
 /*
  * LCD Register initialization. 
  */
 void LCD_init(void)
 {
+  module_init();
   LCD_reset();
   
   /* Let's start with how Waveshare does things and go from there. */
@@ -166,39 +230,6 @@ void LCD_init(void)
   LCD_write_command(ST7789_DISPON);
 }
 
-/*
- * Hardware Reset
- */
-static void LCD_reset(void)
-{
-  digitalWrite(LCD_CS, 0);
-  delay(100);
-  digitalWrite(LCD_RST, 1);
-  delay(100);
-  digitalWrite(LCD_RST, 0);
-  delay(100);
-}
-
-/*
- * Write a command to the LCD Panel
- */
-static void LCD_write_command(uint8_t data)
-{
-  digitalWrite(LCD_CS, 0);
-  digitalWrite(LCD_DC, 0);
-  wiringPiSPIDataRW(0, &data, 1);
-}
-
-/*
- * Write a byte of data to the LCD
- */
-static void LCD_write_data(uint8_t data)
-{
-  digitalWrite(LCD_CS, 0);
-  digitalWrite(LCD_DC, 1);
-  wiringPiSPIDataRW(0, &data, 1);
-  digitalWrite(LCD_CS, 1);
-}
 
 
-#endif /* !LCD_H */
+#endif /* !_LCD_H_ */

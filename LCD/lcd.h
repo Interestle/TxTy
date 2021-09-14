@@ -225,7 +225,7 @@ void LCD_init(void)
    * PVGAMCTRL - Positive Voltage Gamma Control. Requires PHD to understand *
    * NVGAMCTRL - Negative Voltage Gamma Control. See above                */
 
-  LCD_write_command(ST7789_INVON); /* Adafruit comments just hack on this, so it's needed? */
+  LCD_write_command(ST7789_INVON); 
   LCD_write_command(ST7789_SLPOUT);
   LCD_write_command(ST7789_DISPON);
 }

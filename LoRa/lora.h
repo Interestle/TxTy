@@ -18,6 +18,7 @@
 
 #include <pigpio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* TODO: remove when not needed anymore: */
@@ -30,9 +31,11 @@ static int8_t loraMode = -1;
 /* Function prototypes */
 int32_t loraInit (char *serDevice, uint32_t baud);
 int32_t loraSleep (int8_t mode);
+int32_t loraSend (uint16_t address, uint8_t payload, char *data);
+int32_t loraReceive (char *buffer);
 int32_t loraClose (void);
 
-static void loraWait(uint32_t maxWaitTime);
+//static void loraWait(uint32_t maxWaitTime);
 void loraCleanBuffer (void);
 
 
@@ -132,6 +135,59 @@ int32_t loraSleep (int8_t mode)
   return loraMode;
 }
 
+
+/*
+ *
+ *
+ */
+int32_t loraSend (uint16_t address, uint8_t payload, char *data)
+{ 
+  if (loraHandle < 0) return loraHandle;  
+  if (loraMode == 1) return PI_BAD_MODE;
+  if (payload > 240) return PI_BAD_PARAM;
+
+  uint8_t length = strlen(data);
+  if (length > payload) return PI_BAD_PARAM;
+
+  char message [255];
+
+  sprintf(message, "AT+SEND=%d,%d,%s\r\n",address, payload, data);
+
+  printf("message: %s", message);
+
+  int temp = serWrite(loraHandle, message, strlen(message));
+  if (temp < 0) return temp;
+
+  while(!serDataAvailable(loraHandle)); 
+
+  uint8_t strdataLength = serDataAvailable(loraHandle);
+  char strdata [strdataLength];
+  temp = serRead(loraHandle, strdata, strdataLength);
+  if(temp < 0) return temp;
+
+  if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
+  return 0;
+
+
+}
+
+int32_t loraReceive (char *buffer)
+{
+  if(serDataAvailable(loraHandle))
+  {
+    uint8_t strdataLength = serDataAvailable(loraHandle);
+    char strdata [strdataLength];
+    int temp = serRead(loraHandle, strdata, strdataLength);
+    if (temp < 0) return 0;
+
+    memcpy(buffer, strdata, strdataLength);
+    loraCleanBuffer();
+    return 1;
+  }
+  else
+    return 0;
+}
+
 /*
  * This function closes connection with the RYLR896. It should be used when  
  * finished using the device, say on shutdown. It's not critical, but it is
@@ -155,15 +211,19 @@ int32_t loraClose (void)
  *
  * inputs:
  *   maxWaitTime: Maximum amount of time to wait in microseconds.
- */
+ *
 static void loraWait(uint32_t maxWaitTime)
 {
   printf("    Waiting...\n"); //TODO: Remove eventually
+  uint32_t delTime = 0;
   uint32_t startTick = gpioTick();
   //TODO: Getting PI_BAD_PARAM, ser parameter likely. I'm doing something wrong...
-  while(!serDataAvailable(loraHandle) && ((gpioTick() - startTick) < maxWaitTime));
+  while(!serDataAvailable(loraHandle) && delTime)
+  {
+    delTime = (gpioTick() - startTick) < maxWaitTime;
+  }
 }
-
+*/
 
 /*
  * This function clears out the buffer of the RYLR896. Certain functions in

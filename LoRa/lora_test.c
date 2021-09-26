@@ -15,7 +15,7 @@ int main (void)
   printf("---Initializing LoRa!---\n");
   int temp = loraInit("/dev/ttyAMA0", 115200);
   if (temp < 0)  lexit(temp);
-  
+ /* 
   printf("---Testing Sleep Mode!---\n");
   temp = loraSleep(1);
   if (temp < 0)
@@ -41,7 +41,25 @@ int main (void)
     printf("  Waking from sleep failed.\n");
     lexit(temp);
   }
+*/
+  printf("---Sending message---\n");
+  loraSend (5, 5, "HELLO");
 
+  printf("--- Receiving message---\n");
+
+  uint32_t time = 0;
+  char buffer [50];
+  while(time < 100)
+  {
+    time++;
+    gpioSleep(PI_TIME_RELATIVE, 0, 100000);
+    if(loraReceive(buffer))
+    {
+      printf("message received: %s", buffer);
+    }
+  }
+
+  loraCleanBuffer();
 
   printf("---Closing everything up!---\n");
   if (loraClose() < 0)

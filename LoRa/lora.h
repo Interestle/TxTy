@@ -171,6 +171,16 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
 
 }
 
+/*
+ * This function provides the user with received messages, if they are available.
+ * This should be called frequently enough that a message does not get overwritten
+ * and lost. I'm wondering if I should instead return a struct that includes data
+ * such as the SNR and RSSI... Needs more thought.
+ *
+ * outputs:
+ *  < 0 indicates failure, 0 indicates no message, > 0 indicates message
+ *
+ */
 int32_t loraReceive (char *buffer)
 {
   if(serDataAvailable(loraHandle))
@@ -178,7 +188,67 @@ int32_t loraReceive (char *buffer)
     uint8_t strdataLength = serDataAvailable(loraHandle);
     char strdata [strdataLength];
     int temp = serRead(loraHandle, strdata, strdataLength);
-    if (temp < 0) return 0;
+    if (temp < 0) return temp;
+
+    printf("STRING: %s\n", strdata);
+
+    char strAddr [100];
+    char strLength [100];
+    char strMessage [255];
+    //char strRSSI [100];
+    //char strSNR [100];
+
+    /* Read through the string, and parse only what we want. */
+    int i;
+    for (i = 0; i < strdataLength; i++)
+    {
+      /* All messages start with "+RCV=", just skip to the important stuff. */
+      if ((strdata[i] == 'V') && (strdata[i+1] == '='))
+      {
+        i+=2;
+        int j = 0;
+        while (j != ',')
+        {
+          printf("char: %c\n", strdata[i+j]);
+          strAddr[j] = strdata[i+j];
+          j++;
+        }
+
+        i = j + 1;
+        strAddr[j+1] = '\0';
+        j = 0;
+
+        while(j != ',')
+        {
+          strLength[j] = strdata[i+j];
+          printf("char: %c\n", strdata[i+j]);
+          j++;
+        }
+
+        i = j+1;
+        strLength[j+1] = '\0';
+        j = 0;
+
+        while (j < atoi(strLength))
+        {
+          strMessage[j] = strdata[i+j];
+          printf("char: %c\n", strdata[i+j]);
+          j++;
+        }
+
+        i = j+1;
+        strMessage[j+1] = '\0';
+        j = 0;
+
+
+        printf("-->received addr: %s\n", strAddr);
+        printf("-->received length: %s\n", strLength);
+        printf("-->received mess: %s\n", strMessage);
+        break;
+
+        
+      }
+    }
 
     memcpy(buffer, strdata, strdataLength);
     loraCleanBuffer();

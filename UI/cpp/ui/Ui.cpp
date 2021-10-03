@@ -44,6 +44,9 @@ UWORD battery_color = GREEN;
 sFONT font = Font16;	
 unsigned int text_limit = 24;
 size_t start = 0;
+double row_num = 0; // used to count all rows. This is needed for page label math.
+double page_size = 0; // used to store the amount of rows that can fit on the screen.
+
 
 /*
  * Basic INIT for the 2inch LCD
@@ -85,7 +88,6 @@ void LCD_INIT(void)
 
 	LCD_refresh();	
     
-	LCD_2IN_Display((UBYTE *)BlackImage);
 }
 
 /*
@@ -129,8 +131,6 @@ void LCD_set_font(int size)
 
 	LCD_refresh();
 	
-	// /*3.Refresh the picture in RAM to LCD*/
-    	LCD_2IN_Display((UBYTE *)BlackImage);
 
 }
 
@@ -144,9 +144,8 @@ void LCD_text(std::vector<std::string> &texts)
 	text.clear();
 	text.insert(text.end(), texts.begin(), texts.end());
 	LCD_refresh();
-	
-	// /*3.Refresh the picture in RAM to LCD*/
-    	LCD_2IN_Display((UBYTE *)BlackImage);
+//	printf("page length %f\n", page_size);
+//	printf("number of rows %f\n", row_num);
 }
 
 /*
@@ -182,8 +181,6 @@ void LCD_battery(int charge)
 
 	LCD_refresh();
 
-	// /*3.Refresh the picture in RAM to LCD*/
-    	LCD_2IN_Display((UBYTE *)BlackImage);
 }
 
 /*
@@ -207,7 +204,6 @@ void LCD_up(void)
 	
 	LCD_refresh();
 
-	LCD_2IN_Display((UBYTE *)BlackImage);
 }
 
 /*
@@ -231,7 +227,6 @@ void LCD_down(void)
 	
 	LCD_refresh();
 
-	LCD_2IN_Display((UBYTE *)BlackImage);
 }
 
 /*
@@ -242,11 +237,11 @@ void LCD_refresh(void)
 	Paint_Clear(WHITE); // clear screen and paint it white to make a nice canvas.
 
 	int row = 35; // used to messure where to print text to screen.
-	int start_row; // used to find first line that is actually printed to the screen.
+	double start_row; // used to find first line that is actually printed to the screen.
 	int row_if_no_start = 35; /* this is also counting to where to print to the screen but starting from zero
 				  this is use to mesure how many rows fits on the screen.*/
-	int row_num = 0; // used to count all rows. This is needed for page label math.
-	int page_size = 0; // used to store the amount of rows that can fit on the screen.
+	row_num = 0; // used to count all rows. This is needed for page label math.
+	page_size = 0; // used to store the amount of rows that can fit on the screen.
 
 	for (size_t i = 0; i<text.size(); i++)
 	{
@@ -258,22 +253,61 @@ void LCD_refresh(void)
 		if (i == start)
 		{
 			start_row = row_num;
-		}	
+		}
 	
 		// if the text is larger then the text_limit of the font then it needs to be split into substings smaller then the text_limit.
 		while (temp.length() > text_limit)
 		{
 			std::size_t space = temp.find_last_of(" ", text_limit); // find the first space before the text_limit.
-			std::string temp2 = temp.substr(0,space);
-
-			/* if the next row will go past the edge of the screen then I want to remove the last word in the substring
-			 and replace it with three dots*/
-			if((row + font.Height + 10) > (240 - font.Height))
+			std::string temp2;
+	
+			if ((space == std::string::npos) || (space == 0)) // if there is no space or only one at the beginning.
 			{
-				std::size_t space2 = temp2.find_last_of(" ");
-				temp2.erase(space2+1,temp2.length()-1);
-				temp2.append("...");
+				space = text_limit - 1;
+				temp2 = temp.substr(0,space);
+
+				/* if the next row will go past the edge of the screen then I want to remove the last four characters in the substring
+				 and replace it with three dots*/
+				if((row + font.Height + 10) > (240 - font.Height))
+				{
+					temp2.erase(temp2.length()-5,temp2.length()-1);
+					temp2.append("...");
+				}
+
+				temp.erase(0,space);
+
 			}
+			else // if there is a space between words.
+			{
+				
+				temp2 = temp.substr(0,space);
+
+				/* if the next row will go past the edge of the screen then I want to remove the last word in the substring
+				 and replace it with three dots*/
+				if((row + font.Height + 10) > (240 - font.Height))
+				{
+					std::size_t space2 = temp2.find_last_of(" ");
+					temp2.erase(space2+1,temp2.length()-1);
+					temp2.append("...");
+				}
+
+				temp.erase(0,space);
+				
+				// delete the space from the split.	
+				if (temp.length() > 3)
+				{
+					temp.erase(0,1);
+				}
+
+			}
+			
+			
+			// if the next row will print of the screen then we have counted all the rows that fit on the screen.
+			if((row_if_no_start > (240 - font.Height)) && (page_size == 0))
+			{
+				page_size = row_num;
+			}
+	
 
 			// provided it won't print off the screen and we reached the start index we print to screen.
 			if ((row < (240 - font.Height)) && (i >= start))
@@ -283,14 +317,7 @@ void LCD_refresh(void)
 
 				row += (font.Height + 10);
 			}
-
-			temp.erase(0,space);
-			
-			if (temp.length() > 3)
-			{
-				temp.erase(0,1);
-			}
-	
+				
 			row_if_no_start += (font.Height + 10);
 			row_num++;	
 		}	
@@ -299,7 +326,7 @@ void LCD_refresh(void)
 		if((row_if_no_start > (240 - font.Height)) && (page_size == 0))
 		{
 			page_size = row_num;
-		}
+		}	
 
 		// provided it won't print off the screen and we reached the start index we print to screen.
 		if ((row < (240 - font.Height)) && (i >= start))
@@ -309,42 +336,63 @@ void LCD_refresh(void)
 	
 			row += (font.Height + 10);
 		}
-	
-		row_if_no_start += (font.Height + 10);	
+		
+		row_if_no_start += (font.Height + 10);
 		row_num++;
 	}
 
 	std::string num_pages;
-	std::string current_row;
+	std::string current_page;
 	std::string page;
 	char* page_label;	
 
 	if ((row_num > 0) && (page_size > 0))
 	{
-		num_pages = std::to_string((row_num/page_size) + 1); /* get number of pages by dividing number of all rows divided by how many rows fit on a page then add one.
-									I don't know why the plus one is needed but the divison will round down*/
-		current_row = std::to_string((start_row/page_size) + 1); /* get current row by dividing number of rows before start divided by how many rows fit 
-									on a page then add one*/
-		page = current_row + "/" + num_pages;
-		page_label = const_cast<char*>(page.c_str()); 
+		num_pages = std::to_string((int)(round(row_num/page_size))); /* get number of pages by dividing number of all rows divided by how many rows fit on a page then add one.
+										I don't know why the plus one is needed but the divison will round down*/
+		current_page = std::to_string((int)(floor(start_row/page_size)) + 1); /* get current page by dividing number of rows before start divided by how many rows fit 
+											on a page then add one*/
+		page = current_page + "/" + num_pages;
+		page_label = const_cast<char*>(page.c_str());
+ 
 	}
 	else
 	{
-		page = "0/1";
+		page = "1/1";
 		page_label = const_cast<char*>(page.c_str());
 	}
 
+	int scroll_bar_start = 45;	
 	int scroll_bar_end = 225;
 	
-	int scroll_bar_start = 45 + (start_row*5); // top of scroll bar plus the starting row times 5.
-
-	// provided there is still text. The end of the scroll bar is decided by the number of pages plus the start of the scroll bar.
 	if ((row_num > 0) && (page_size > 0))
-	{	
-		scroll_bar_end = 225 - ( ( ( (row_num/page_size) + 1 ) * page_size ) * 5 ) + (scroll_bar_start - 45);
+	{
+		scroll_bar_end = 225 - (row_num*5);
+		if (scroll_bar_end > 45)
+		{
+			/* provided there is text and the limit of the scroll bar was not reached. 
+			The end of the scroll bar is decided by the number of rows plus the start of the scroll bar. */
+			
+			scroll_bar_start = 45 + (start_row*5);
+		}
+		else
+		{
+			/* If there is to many texts then the limit could be reached.
+			When this happens I divide the rest of the bar by number of rows
+			times the number of rows before the start row. */
+
+			scroll_bar_start = 45 + (int)(round((180/row_num)*start_row));
+		}
+
+		scroll_bar_end = 225 - (row_num*5) + (scroll_bar_start - 45);
 	}
 
-	// make sure the scroll bar start and end stay 5 pixel away from each other and doesn't pass the edges of the scroll bar.
+	// make sure the scroll bar start and end stay 5 pixel away from each other and doesn't pass the edges of the scroll bar.		
+	if (scroll_bar_start < 45)
+	{
+		scroll_bar_start = 45;
+	}
+ 
 	if (scroll_bar_end < (scroll_bar_start + 5))
 	{
 		scroll_bar_end = scroll_bar_start + 5;
@@ -354,17 +402,12 @@ void LCD_refresh(void)
 	{
 		scroll_bar_end = 225;
 	}	
-	
-	if (scroll_bar_start < 45)
-	{
-		scroll_bar_start = 45;
-	} 
-	
+
 	if (scroll_bar_start > (scroll_bar_end - 5))
 	{
 		scroll_bar_start = scroll_bar_end - 5;
 	}
-
+	
 	// Power label
 	Paint_DrawRectangle(0, 0, 100, 30, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
 	Paint_DrawString_EN(10, 10, "power", &Font16, WHITE, BLACK);	
@@ -398,6 +441,9 @@ void LCD_refresh(void)
 	Paint_DrawRectangle(272, scroll_bar_start, 288, scroll_bar_end, GRAY, DOT_PIXEL_1X1, DRAW_FILL_FULL);
 	Paint_DrawLine(280, 235, 277, 230, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	Paint_DrawLine(280, 235, 283, 230, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+	// /*3.Refresh the picture in RAM to LCD*/
+    	LCD_2IN_Display((UBYTE *)BlackImage);
 
 }
 /*

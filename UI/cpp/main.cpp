@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     texts.push_back("Operations");
     texts.push_back("F.L.A.M.I.N.G.O.s never say die.");
 
+
     LCD_text(texts);
     DEV_Delay_ms(1000);
     LCD_battery(15);
@@ -34,7 +35,7 @@ int main(int argc, char *argv[])
     LCD_battery(50);
     DEV_Delay_ms(1000);
 
-    for (size_t i = 0; i<texts.size(); i++)
+    for (size_t i = 0; i<(texts.size() - 8)*2; i++)
     {
     	LCD_down();
     	DEV_Delay_ms(500);

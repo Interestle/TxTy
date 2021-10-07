@@ -43,16 +43,42 @@ int main (void)
     lexit(temp);
   }
   */
+
+/*
+  printf("---Setting Address to 5---\n");
+  temp = loraSetAddress(1);
+  if (temp < 0) 
+  {
+    lexit (temp);
+  }
+*/
   gpioDelay(10000);
   printf("---Sending message---\n");
+/*
+  char AAA [240];
+  for (int k = 0; k < 240; k++)
+  {
+    AAA[k] = 'A';
+  }
+  */
   loraSend (5, 5, "HELLO");
+/*
+  for (int k = 1; k < 240; k++)
+  {
+     gpioDelay(50000);
+     char temp [250];
+     strncpy(temp, AAA, k);
+     printf("Sending: %s\n", temp);
+     loraSend (5, k, temp);
+  }
 
-  /*
+*/
+  
   printf("--- Receiving message---\n");
 
   uint32_t time = 0;
   loraMessage mymess;
-  while(time < 100)
+  while(time < 500)
   {
     time++;
     gpioSleep(PI_TIME_RELATIVE, 0, 100000);
@@ -67,21 +93,15 @@ int main (void)
   }
 
   //loraCleanBuffer();
-  */
-  printf("---Setting Address to 64123---\n");
-  temp = loraSetAddress(64123);
-  if (temp < 0) 
-  {
-    lexit (temp);
-  }
-
+  
+/* 
   printf("---Getting Address of LoRa module!---\n");
   temp = loraGetAddress();
   if (temp < 0)
   {
     lexit (temp);
   }
-
+ */
   printf("---Closing everything up!---\n");
   if (loraClose() < 0)
     printf("  PI_BAD_HANDLE\n");

@@ -13,7 +13,7 @@
  *  > If the device is in sleep mode, will it wake up if it is intended to 
  *    receive a message?
  *
- * Last updated: September 25, 2021
+ * Last updated: October 7, 2021
  ******************************************************************************/
 
 #include <pigpio.h>
@@ -200,7 +200,7 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
 /*
  * This function provides the user with received messages, if they are available.
  * This should be called frequently enough that a message does not get overwritten
- * and lost.
+ * and lost. Will clear the buffer after receiving one message.
  *
  * CURRENTLY GETTING SIGNAL 11. I'M NOT SURE WHY, MORE INVESTIGATION IS NEEDED!
  *
@@ -220,20 +220,18 @@ int32_t loraReceive (loraMessage *messageData)
     int temp = serRead(loraHandle, strdata, strdataLength);
     if (temp < 0) return temp;
 
-    //printf(":::STRING: %s\n", strdata);
-
-    char strAddr [6];
-    char strLength [4];
-    char strMessage [255];
-    char strRSSI [6];
-    char strSNR [6];
+    char strAddr [10];
+    char strLength [10];
+    char strMessage [260];
+    char strRSSI [10];
+    char strSNR [10];
 
     /* Read through the string, and parse only what we want. */
     int i;
     for (i = 0; i < strdataLength; i++)
     {
       /* All messages start with "+RCV=", just skip to the important stuff. */
-      if ((strdata[i] == 'V') && (strdata[i+1] == '='))
+      if (strdata[i] == 'V')
       { 
         /* Get the sender's address. */
         i+=2;

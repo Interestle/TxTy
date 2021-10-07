@@ -28,15 +28,33 @@
 static int32_t loraHandle = PI_BAD_HANDLE;
 static int8_t loraMode = -1;
 
+/* Structs */
+typedef struct {
+  uint16_t address;
+  uint8_t length;
+  char message[255];
+  int16_t RSSI;
+  int16_t SNR;
+} loraMessage;
+
 /* Function prototypes */
 int32_t loraInit (char *serDevice, uint32_t baud);
 int32_t loraSleep (int8_t mode);
+
+/* Sending/Receiving */
 int32_t loraSend (uint16_t address, uint8_t payload, char *data);
-int32_t loraReceive (char *buffer);
+int32_t loraReceive (loraMessage *messageData);
+
+/* Setters/Getters */
+int32_t loraSetAddress(uint16_t address);
+int32_t loraGetAddress(void);
+
 int32_t loraClose (void);
 
 //static void loraWait(uint32_t maxWaitTime);
 void loraCleanBuffer (void);
+
+
 
 
 /*
@@ -137,7 +155,15 @@ int32_t loraSleep (int8_t mode)
 
 
 /*
+ * This function sends a message to the specified address. 
  *
+ * inputs:
+ *   address: the address to send it to. Address 0 sends to all addresses from [0,65535].
+ *   payload: the length of the message to send in bytes. Maximum of 240.
+ *   data: message to send, ASCII formatted.
+ *
+ * outputs:
+ *   < 0 indicates failure.
  *
  */
 int32_t loraSend (uint16_t address, uint8_t payload, char *data)
@@ -147,9 +173,9 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
   if (payload > 240) return PI_BAD_PARAM;
 
   uint8_t length = strlen(data);
-  if (length > payload) return PI_BAD_PARAM;
+  if (length > payload) return PI_BAD_PARAM; // Maybe instead a payload, use length of message ?
 
-  char message [255];
+  char message [260]; // Guarantees large enough buffer.
 
   sprintf(message, "AT+SEND=%d,%d,%s\r\n",address, payload, data);
 
@@ -174,14 +200,18 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
 /*
  * This function provides the user with received messages, if they are available.
  * This should be called frequently enough that a message does not get overwritten
- * and lost. I'm wondering if I should instead return a struct that includes data
- * such as the SNR and RSSI... Needs more thought.
+ * and lost.
+ *
+ * CURRENTLY GETTING SIGNAL 11. I'M NOT SURE WHY, MORE INVESTIGATION IS NEEDED!
+ *
+ * inputs:
+ *   messageData: A loraMessage struct. 
  *
  * outputs:
  *  < 0 indicates failure, 0 indicates no message, > 0 indicates message
  *
  */
-int32_t loraReceive (char *buffer)
+int32_t loraReceive (loraMessage *messageData)
 {
   if(serDataAvailable(loraHandle))
   {
@@ -190,13 +220,13 @@ int32_t loraReceive (char *buffer)
     int temp = serRead(loraHandle, strdata, strdataLength);
     if (temp < 0) return temp;
 
-    printf("STRING: %s\n", strdata);
+    //printf(":::STRING: %s\n", strdata);
 
-    char strAddr [100];
-    char strLength [100];
+    char strAddr [6];
+    char strLength [4];
     char strMessage [255];
-    //char strRSSI [100];
-    //char strSNR [100];
+    char strRSSI [6];
+    char strSNR [6];
 
     /* Read through the string, and parse only what we want. */
     int i;
@@ -204,59 +234,148 @@ int32_t loraReceive (char *buffer)
     {
       /* All messages start with "+RCV=", just skip to the important stuff. */
       if ((strdata[i] == 'V') && (strdata[i+1] == '='))
-      {
+      { 
+        /* Get the sender's address. */
         i+=2;
         int j = 0;
-        while (j != ',')
+        
+        while (strdata[i+j] != ',')
         {
-          printf("char: %c\n", strdata[i+j]);
           strAddr[j] = strdata[i+j];
           j++;
         }
+        strAddr[j] = '\0';
 
-        i = j + 1;
-        strAddr[j+1] = '\0';
+        /* Get the length of the message */
+        i = i+j+1;
         j = 0;
 
-        while(j != ',')
+        while (strdata[i+j] != ',')
         {
           strLength[j] = strdata[i+j];
-          printf("char: %c\n", strdata[i+j]);
           j++;
         }
+        strLength[j] = '\0';
 
-        i = j+1;
-        strLength[j+1] = '\0';
-        j = 0;
+        /* Get the message */
+        i = i+j+1;
+        temp = atoi(strLength);
 
-        while (j < atoi(strLength))
+        for(j = 0; j < temp; j++)
         {
-          strMessage[j] = strdata[i+j];
-          printf("char: %c\n", strdata[i+j]);
-          j++;
+          strMessage[j] = strdata[i+j]; 
         }
+        strMessage[j] = '\0';
 
-        i = j+1;
-        strMessage[j+1] = '\0';
+        /* Get the RSSI */
+        i = i+j+1;
         j = 0;
 
+        while (strdata[i+j] != ',')
+        {
+          strRSSI[j] = strdata[i+j];
+          j++;
+        }
+        strRSSI[j] = '\0';
 
-        printf("-->received addr: %s\n", strAddr);
-        printf("-->received length: %s\n", strLength);
-        printf("-->received mess: %s\n", strMessage);
-        break;
+        /* Get the SNR */
+        i = i+j+1;
+        j = 0;
 
-        
+        while (strdata[i+j] != '\r')
+        {
+          strSNR[j] = strdata[i+j];
+          j++;
+        }
+        strSNR[j] = '\0';
+
+        messageData->address = atoi(strAddr);
+        messageData->length = atoi(strLength);
+        strcpy(messageData->message, strMessage);
+        messageData->RSSI = atoi(strRSSI);
+        messageData->SNR = atoi(strSNR);
+
+        //printf("address: %d\n", messageData->address);
+        //printf("length: %d\n", messageData->length);
+        //printf("message: %s\n", messageData->message);
+        //printf("RSSI: %d\n", messageData->RSSI);
+        //printf("SNR: %d\n", messageData->SNR);
+
+        break;        
       }
     }
 
-    memcpy(buffer, strdata, strdataLength);
     loraCleanBuffer();
     return 1;
   }
   else
     return 0;
 }
+
+/*
+ * This function sets the address of this LoRa module. The module will save it
+ * in its EEPROM.
+ *
+ * inputs:
+ *
+ * outputs:
+ *   0 if OK, otherwise failure.
+ *
+ */
+int32_t loraSetAddress(uint16_t address)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+  char setAddr [20]; // Bigger than it needs to be.
+
+  sprintf(setAddr, "AT+ADDRESS=%d\r\n",address);
+
+  int temp = serWrite(loraHandle, setAddr, strlen(setAddr));
+  if (temp < 0) return temp;
+
+  while(!serDataAvailable(loraHandle));
+
+  uint8_t strdataLength = serDataAvailable(loraHandle);
+  char strdata [strdataLength];
+  temp = serRead(loraHandle, strdata, strdataLength);
+  if(temp < 0) return temp;
+
+  if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
+  return 0;
+}
+
+
+/*
+ * This function gets the address the LoRa Module has saved in its EEPROM.
+ *
+ * outputs:
+ *  <0 indicates failure, otherwise the address of the module, should be a 
+ *    number from [0,65535].
+ *
+ */
+int32_t loraGetAddress(void)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+  // TODO: Clear the buffer first?
+
+  int temp = serWrite(loraHandle, "AT+ADDRESS?\r\n", 13); 
+  if (temp < 0) return temp;
+
+  while(!serDataAvailable(loraHandle));
+
+  uint8_t strdataLength = serDataAvailable(loraHandle);
+  char strdata [strdataLength];
+  temp = serRead(loraHandle, strdata, strdataLength);
+  if (temp < 0) return temp;
+
+  // The message should be "+ADDRESS=#"
+  printf(":::Message: %s\n", strdata);
+  return -1; // TODO: FIX!
+}
+
 
 /*
  * This function closes connection with the RYLR896. It should be used when  

@@ -15,6 +15,8 @@
  *
  * Last updated: October 7, 2021
  ******************************************************************************/
+ 
+ /* To use pigpio, run: gcc -Wall -pthread -lpigpio -lrt YOUR_PROGRAM_HERE.c -o executable_name */
 
 #include <pigpio.h>
 #include <stdint.h>

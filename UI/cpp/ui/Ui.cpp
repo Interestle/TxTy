@@ -40,6 +40,8 @@ void LCD_exit(void);
 UWORD *BlackImage;
 std::vector<std::string> text;
 int battery = 305;
+UWORD background_color = WHITE;
+UWORD draw_color = BLACK;
 UWORD battery_color = GREEN;
 sFONT font = Font16;	
 unsigned int text_limit = 24;
@@ -66,7 +68,7 @@ void LCD_INIT(void)
     	/* LCD Init */
 	printf("2inch LCD demo...\r\n");
 	LCD_2IN_Init();
-	LCD_2IN_Clear(WHITE);
+	LCD_2IN_Clear(background_color);
 	LCD_SetBacklight(1010);
 	
     	UDOUBLE Imagesize = LCD_2IN_HEIGHT*LCD_2IN_WIDTH*2;
@@ -78,11 +80,111 @@ void LCD_INIT(void)
 	
     	// /*1.Create a new image cache named IMAGE_RGB and fill it with white*/
     	Paint_NewImage(BlackImage, LCD_2IN_WIDTH, LCD_2IN_HEIGHT, 90, WHITE, 16);
-    	Paint_Clear(WHITE);
+    	Paint_Clear(background_color);
 	Paint_SetRotate(ROTATE_270);
     	
 	// /* GUI */
     	printf("drawing...\r\n");
+	
+	Paint_Clear(BLACK);
+	for (int j = 61; j < 170; j += 5)
+	{
+		// Draw first t.
+		int i = 0;
+		for (i = 60; i < j; i++)
+		{
+			Paint_DrawLine(75, (i+10), 85, i, RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		for (i = 45; i < (j-60); i++)
+		{
+			Paint_DrawLine(i, 100, (i+10), 110, RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		// Draw x.
+		for (i = 0; i < (j-110); i++)
+		{
+			Paint_DrawLine((105+i), (120+i), (115+i), (120+i), GREEN, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+			Paint_DrawLine((165-i), (120+i), (155-i), (120+i), GREEN, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		// Draw second t.
+		for (i = 60; i < j; i++)
+		{
+			Paint_DrawLine(185, (i+10), 195, i, YELLOW, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		for (i = 155; i < (j+50); i++)
+		{
+			Paint_DrawLine(i, 100, (i+10), 110, YELLOW, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		// Draw y.
+		for (i = 0; i < (j-125); i++)
+		{
+			Paint_DrawLine((210+i), (80+i), (220+i), (80+i), BLUE, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+	
+		for (i = 0; i < (j-120); i++)
+		{
+			Paint_DrawLine((280-i), (80+i*2), (270-i), (80+i*2), BLUE, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		}
+
+		LCD_2IN_Display((UBYTE *)BlackImage);
+	}
+	Paint_Clear(WHITE);
+	
+	// Draw radio wave with circles.
+	Paint_DrawCircle(250, 120, 20, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawCircle(250, 120, 40, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawCircle(250, 120, 60, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+
+	// Draw first t.
+	int i = 0;
+	for (i = 60; i < 170; i++)
+	{
+		Paint_DrawLine(75, (i+10), 85, i, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	for (i = 45; i < 110; i++)
+	{
+		Paint_DrawLine(i, 100, (i+10), 110, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	// Draw x.
+	for (i = 0; i < 60; i++)
+	{
+		Paint_DrawLine((105+i), (120+i), (115+i), (120+i), BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+		Paint_DrawLine((165-i), (120+i), (155-i), (120+i), BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	// Draw second t.
+	for (i = 60; i < 170; i++)
+	{
+		Paint_DrawLine(185, (i+10), 195, i, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	for (i = 155; i < 220; i++)
+	{
+		Paint_DrawLine(i, 100, (i+10), 110, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	// Draw y.
+	for (i = 0; i < 40; i++)
+	{
+		Paint_DrawLine((210+i), (80+i), (220+i), (80+i), BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+	
+	for (i = 0; i < 50; i++)
+	{
+		Paint_DrawLine((280-i), (80+i*2), (270-i), (80+i*2), BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	}
+
+	LCD_2IN_Display((UBYTE *)BlackImage);
+
+	DEV_Delay_ms(3000);
+
+	Paint_Clear(background_color);
     	
 	// /*2.Drawing on the image*/
 
@@ -143,6 +245,7 @@ void LCD_text(std::vector<std::string> &texts)
 {
 	text.clear();
 	text.insert(text.end(), texts.begin(), texts.end());
+	start = text.size() - 1;
 	LCD_refresh();
 //	printf("page length %f\n", page_size);
 //	printf("number of rows %f\n", row_num);
@@ -182,7 +285,23 @@ void LCD_battery(int charge)
 	LCD_refresh();
 
 }
-
+void LCD_text_index(int text_index)
+{
+	if (0 >= text_index)
+	{
+		start = 0;
+	}
+	else if (text_index < text.size())
+	{
+		start = text_index;
+	}
+	else
+	{
+		start = text.size() - 1;
+	}
+	
+	LCD_refresh();
+}
 /*
  * Changes UI to move up in the text.
  * if already at the first text it won't do anything.
@@ -230,11 +349,32 @@ void LCD_down(void)
 }
 
 /*
+ * activate dark mode
+ */
+void LCD_dark_mode()
+{
+	background_color = BLACK;
+	draw_color = WHITE;
+	LCD_refresh();
+}
+
+/*
+ * return to normal mode
+ */
+void LCD_light_mode()
+{
+	background_color = WHITE;
+	draw_color = BLACK;
+	LCD_refresh();
+}
+
+
+/*
  * Refresh screen.
  */
 void LCD_refresh(void)
 {
-	Paint_Clear(WHITE); // clear screen and paint it white to make a nice canvas.
+	Paint_Clear(background_color); // clear screen.
 
 	int row = 35; // used to messure where to print text to screen.
 	double start_row; // used to find first line that is actually printed to the screen.
@@ -313,7 +453,7 @@ void LCD_refresh(void)
 			if ((row < (240 - font.Height)) && (i >= start))
 			{
 				next_text = const_cast<char*>(temp2.c_str());
-				Paint_DrawString_EN(0, row, next_text, &font, WHITE, BLACK);
+				Paint_DrawString_EN(0, row, next_text, &font, background_color, draw_color);
 
 				row += (font.Height + 10);
 			}
@@ -332,7 +472,7 @@ void LCD_refresh(void)
 		if ((row < (240 - font.Height)) && (i >= start))
 		{
 			next_text = const_cast<char*>(temp.c_str());
-			Paint_DrawString_EN(0, row, next_text, &font, WHITE, BLACK);
+			Paint_DrawString_EN(0, row, next_text, &font, background_color, draw_color);
 	
 			row += (font.Height + 10);
 		}
@@ -384,7 +524,7 @@ void LCD_refresh(void)
 			scroll_bar_start = 45 + (int)(round((180/row_num)*start_row));
 		}
 
-		scroll_bar_end = 225 - (row_num*5) + (scroll_bar_start - 45);
+		scroll_bar_end = 230 - (row_num*5) + (scroll_bar_start - 45);
 	}
 
 	// make sure the scroll bar start and end stay 5 pixel away from each other and doesn't pass the edges of the scroll bar.		
@@ -409,38 +549,38 @@ void LCD_refresh(void)
 	}
 	
 	// Power label
-	Paint_DrawRectangle(0, 0, 100, 30, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(10, 10, "power", &Font16, WHITE, BLACK);	
+	Paint_DrawRectangle(0, 0, 100, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(10, 10, "power", &Font16,  background_color, draw_color);	
 	
 	// Reset label
-	Paint_DrawRectangle(100, 0, 200, 30, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(110, 10, "reset", &Font16, WHITE, BLACK);	
+	Paint_DrawRectangle(100, 0, 200, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(110, 10, "reset", &Font16, background_color, draw_color);	
 
 	// Page label
-	Paint_DrawRectangle(200, 0, 260, 30, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(210, 10, page_label, &Font16, WHITE, BLACK);	
+	Paint_DrawRectangle(200, 0, 260, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(210, 10, page_label, &Font16, background_color, draw_color);	
 
 	// Battery
-	Paint_DrawRectangle(260, 0, 320, 30, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawRectangle(274, 9, 306, 26, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(260, 0, 320, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(274, 9, 306, 26, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
 	Paint_DrawRectangle(275, 10, battery, 26, battery_color, DOT_PIXEL_1X1, DRAW_FILL_FULL);
-	Paint_DrawRectangle(306, 15, 308, 20, BLACK, DOT_PIXEL_1X1, DRAW_FILL_FULL);
+	Paint_DrawRectangle(306, 15, 308, 20, draw_color, DOT_PIXEL_1X1, DRAW_FILL_FULL);
 
 	// up and down labels
-	Paint_DrawRectangle(290, 30, 320, 135, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawLine(305, 80, 300, 90, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(305, 80, 310, 90, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawRectangle(290, 135, 320, 240, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawLine(305, 195, 300, 185, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(305, 195, 310, 185, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawRectangle(290, 30, 320, 135, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawLine(305, 80, 300, 90, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(305, 80, 310, 90, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawRectangle(290, 135, 320, 240, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawLine(305, 195, 300, 185, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(305, 195, 310, 185, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
 	// scroll bar
-	Paint_DrawRectangle(270, 30, 290, 240, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawLine(280, 35, 277, 40, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(280, 35, 283, 40, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawRectangle(270, 30, 290, 240, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawLine(280, 35, 277, 40, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(280, 35, 283, 40, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	Paint_DrawRectangle(272, scroll_bar_start, 288, scroll_bar_end, GRAY, DOT_PIXEL_1X1, DRAW_FILL_FULL);
-	Paint_DrawLine(280, 235, 277, 230, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(280, 235, 283, 230, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(280, 235, 277, 230, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(280, 235, 283, 230, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
 	// /*3.Refresh the picture in RAM to LCD*/
     	LCD_2IN_Display((UBYTE *)BlackImage);

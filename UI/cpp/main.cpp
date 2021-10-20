@@ -25,25 +25,35 @@ int main(int argc, char *argv[])
     texts.push_back("Nonstop");
     texts.push_back("Gnarly");
     texts.push_back("Operations");
-    texts.push_back("F.L.A.M.I.N.G.O.s never say die.");
-
+    texts.push_back("F.L.A.M.I.N.G.O.s");
+    texts.push_back("never say die.");
 
     LCD_text(texts);
+    DEV_Delay_ms(1000);
+    LCD_dark_mode();
+    DEV_Delay_ms(1000);
+    LCD_light_mode();
+    DEV_Delay_ms(1000);
+    LCD_text_index(8);
     DEV_Delay_ms(1000);
     LCD_battery(15);
     DEV_Delay_ms(1000);
     LCD_battery(50);
     DEV_Delay_ms(1000);
+    LCD_set_font(24);
+    DEV_Delay_ms(1000);
+    LCD_set_font(16);
+    DEV_Delay_ms(1000);
 
     for (size_t i = 0; i<(texts.size() - 8)*2; i++)
     {
-    	LCD_down();
+    	LCD_up();
     	DEV_Delay_ms(500);
     }
 
-    for (size_t i = 0; i<texts.size(); i++)
+    for (size_t i = 0; i<(texts.size() - 8); i++)
     {
-    	LCD_up();
+    	LCD_down();
     	DEV_Delay_ms(500);
     }
 

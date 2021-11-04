@@ -195,8 +195,6 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
 
   if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
   return 0;
-
-
 }
 
 /*
@@ -423,13 +421,13 @@ static void loraWait(uint32_t maxWaitTime)
  */
 void loraCleanBuffer(void)
 {
-  printf("    cleaning:\n"); //TODO: Remove eventually
+  //printf("    cleaning:\n"); //TODO: Remove eventually
   while(serDataAvailable(loraHandle))
   {
     uint8_t len = serDataAvailable(loraHandle);
     char str [len];
     serRead(loraHandle, str, len);
-    printf("    ->%s\n", str); //TODO: Remove eventually
+    //printf("    ->%s\n", str); //TODO: Remove eventually
   }
 }
 

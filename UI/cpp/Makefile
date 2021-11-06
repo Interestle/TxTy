@@ -11,7 +11,7 @@ TARGET = main
 
 USELIB = USE_WIRINGPI_LIB
 DEBUG = -D $(USELIB)
-LIB = -lwiringPi -lm 
+LIB = -lrt -lpigpio -lncurses -pthread -lwiringPi -lm 
 
 CC = g++
 MSG = -g -O0 -Wall

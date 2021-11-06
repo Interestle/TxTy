@@ -28,13 +28,13 @@ int main(int argc, char *argv[])
     texts.push_back("F.L.A.M.I.N.G.O.s");
     texts.push_back("never say die.");
 
-    LCD_text(texts);
+    LCD_messages(texts);
     DEV_Delay_ms(1000);
     LCD_dark_mode();
     DEV_Delay_ms(1000);
     LCD_light_mode();
     DEV_Delay_ms(1000);
-    LCD_text_index(8);
+    LCD_select_message_by_index(8);
     DEV_Delay_ms(1000);
     LCD_battery(15);
     DEV_Delay_ms(1000);

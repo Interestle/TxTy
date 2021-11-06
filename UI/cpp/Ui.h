@@ -3,49 +3,61 @@
 * | Author      :   Seth Jackson   
 * | Info       	: Basic UI using waveshare's example code for the their 2in
 *		  LCD module. It uses 8 fuctions starting with LCD_INIT and 
-*		  LCD_exit both need to be in the LCD_INIT sets up everything
+*		  LCD_exit both need to be used. The LCD_INIT sets up everything
 *		  needed to start painting but malloc's a pointer that needs
 *		  to be freed in LCD_exit. LCD_set_font takes an int representing
 *		  the font size and will change the text size displayed on the UI
-*		  unless it is not a size I have built in. If not then it will 
+*		  unless it is not a size I have built in. In that case it will 
 *		  be set to 16. LCD_battery takes an int representing the 
 *		  percentage of charge left. If the percentage is 20 or less
 *		  it will change the color of the battery icon to red. The LCD_up
 *		  fuction will move the text up one and the LCD_down moves the text
-*		  down one. LCD_refresh is mostly just used for the other fuctions
+*		  down one. LCD_select_message_by_index will jump to a specific text based on index.
+*		  LCD_dark_mode will change the background to darker colors
+*		  and LCD_light_mode changes the background to lighter colors.
+*		  LCD_refresh is mostly just used for the other fuctions
 *		  to display the changes.
 *
-void LCD_INIT(void);
-void LCD_text(std::vector<std::string> &texts);
-void LCD_set_font(int size); 
-void LCD_battery(int charge);
-void LCD_up(void);
-void LCD_down(void);
-void LCD_refresh(void);
-void LCD_exit(void);
-
 *----------------
-* |	This version:   V1.0
-* | Date        :   2021-09-26
-* | Info        :   Basic version
+* |	This version:   V1.2
+* | Date        :   2021-11-6
+* | Info        :
 *
 ******************************************************************************/
 
-#include "Ui.h"
+
+#ifndef _UI_H_
+#define _UI_H_
+
+#include "GUI_BMP.h"
+#include <vector>
+#include <string>
 #include <stdio.h>	//printf()
 #include <stdlib.h>	//exit()
 #include <signal.h>     //signal()
 #include <math.h>
 
+void LCD_INIT(void);
+void LCD_messages(std::vector<std::string> &new_messages);
+void LCD_set_font(int size); 
+void LCD_battery(int charge);
+void LCD_up(void);
+void LCD_select_message_by_index(int message_index);
+void LCD_down(void);
+void LCD_dark_mode();
+void LCD_light_mode();
+void LCD_refresh(void);
+void LCD_exit(void);
+
 UWORD *BlackImage;
-std::vector<std::string> text;
+std::vector<std::string> messages;
 int battery = 305;
 UWORD background_color = WHITE;
 UWORD draw_color = BLACK;
 UWORD battery_color = GREEN;
 sFONT font = Font16;	
-unsigned int text_limit = 24;
-size_t start = 0;
+unsigned int text_limit = 24; // used to help wrap text around screen.
+size_t starting_message = 0; // Index used to select which message is read first. It then prints only the messages after this message.
 double row_num = 0; // used to count all rows. This is needed for page label math.
 double page_size = 0; // used to store the amount of rows that can fit on the screen.
 
@@ -195,7 +207,7 @@ void LCD_INIT(void)
 /*
  * Set font of text.
  * text_limit is used to wrap the text around before it reaches the scroll bar.
- * each text_limit was counted by printing to screen and counting every character then fit on the screen.
+ * each text_limit was counted by printing to screen and counting every character that fits on the screen.
  */
 void LCD_set_font(int size)
 {
@@ -241,11 +253,11 @@ void LCD_set_font(int size)
  * Takes a vector of strings then clears the current text before
  * inserting the strings from the vector.
  */
-void LCD_text(std::vector<std::string> &texts)
+void LCD_messages(std::vector<std::string> &new_messages)
 {
-	text.clear();
-	text.insert(text.end(), texts.begin(), texts.end());
-	start = text.size() - 1;
+	messages.clear();
+	messages.insert(messages.end(), new_messages.begin(), new_messages.end());
+	starting_message = messages.size() - 1;
 	LCD_refresh();
 //	printf("page length %f\n", page_size);
 //	printf("number of rows %f\n", row_num);
@@ -276,7 +288,7 @@ void LCD_battery(int charge)
 	}
 	else
 	{
-		printf("Not a valid color.\r\n");
+		printf("Not a valid charge.\r\n");
 		free(BlackImage);
     		BlackImage = NULL;
 		exit(1);
@@ -285,19 +297,19 @@ void LCD_battery(int charge)
 	LCD_refresh();
 
 }
-void LCD_text_index(int text_index)
+void LCD_select_message_by_index(int message_index)
 {
-	if (0 >= text_index)
+	if (0 >= message_index)
 	{
-		start = 0;
+		starting_message = 0;
 	}
-	else if (text_index < text.size())
+	else if (message_index < static_cast<int>(messages.size()))
 	{
-		start = text_index;
+		starting_message = message_index;
 	}
 	else
 	{
-		start = text.size() - 1;
+		starting_message = messages.size() - 1;
 	}
 	
 	LCD_refresh();
@@ -308,17 +320,17 @@ void LCD_text_index(int text_index)
  */
 void LCD_up(void)
 {
-	if (0 >= start)
+	if (0 >= starting_message)
 	{
-		start = 0;
+		starting_message = 0;
 	}
-	else if (start < text.size())
+	else if (starting_message < messages.size())
 	{
-		start--;
+		starting_message--;
 	}
 	else
 	{
-		start = text.size() - 1;
+		starting_message = messages.size() - 1;
 	}
 	
 	LCD_refresh();
@@ -331,17 +343,17 @@ void LCD_up(void)
  */
 void LCD_down(void)
 {
-	if (0 > start)
+	if (0 > starting_message)
 	{
-		start = 0;
+		starting_message = 0;
 	}
-	else if (start < (text.size() - 1))
+	else if (starting_message < (messages.size() - 1))
 	{
-		start++;
+		starting_message++;
 	}
 	else
 	{
-		start = text.size() - 1;
+		starting_message = messages.size() - 1;
 	}
 	
 	LCD_refresh();
@@ -377,107 +389,107 @@ void LCD_refresh(void)
 	Paint_Clear(background_color); // clear screen.
 
 	int row = 35; // used to messure where to print text to screen.
-	double start_row; // used to find first line that is actually printed to the screen.
-	int row_if_no_start = 35; /* this is also counting to where to print to the screen but starting from zero
+	double starting_row; // used to find first line that is actually printed to the screen.
+	int row_starting_from_zero = 35; /* this is also counting to where to print to the screen but starting from zero
 				  this is use to mesure how many rows fits on the screen.*/
 	row_num = 0; // used to count all rows. This is needed for page label math.
 	page_size = 0; // used to store the amount of rows that can fit on the screen.
 
-	for (size_t i = 0; i<text.size(); i++)
+	for (size_t i = 0; i<messages.size(); i++)
 	{
-		std::string temp = text[i];
-		char* next_text;		
+		std::string current_message = messages[i];
+		char* next_message;		
 
-		/* when i is equal to the start index text can start being printed and start_row is equal to
+		/* when i is equal to the start index text can start being printed and starting_row is equal to
 		the number of rows that have been counted.*/
-		if (i == start)
+		if (i == starting_message)
 		{
-			start_row = row_num;
+			starting_row = row_num;
 		}
 	
 		// if the text is larger then the text_limit of the font then it needs to be split into substings smaller then the text_limit.
-		while (temp.length() > text_limit)
+		while (current_message.length() > text_limit)
 		{
-			std::size_t space = temp.find_last_of(" ", text_limit); // find the first space before the text_limit.
-			std::string temp2;
+			std::size_t space = current_message.find_last_of(" ", text_limit); // find the first space before the text_limit.
+			std::string sub_message;
 	
 			if ((space == std::string::npos) || (space == 0)) // if there is no space or only one at the beginning.
 			{
 				space = text_limit - 1;
-				temp2 = temp.substr(0,space);
+				sub_message = current_message.substr(0,space);
 
 				/* if the next row will go past the edge of the screen then I want to remove the last four characters in the substring
 				 and replace it with three dots*/
 				if((row + font.Height + 10) > (240 - font.Height))
 				{
-					temp2.erase(temp2.length()-5,temp2.length()-1);
-					temp2.append("...");
+					sub_message.erase(sub_message.length()-5,sub_message.length()-1);
+					sub_message.append("...");
 				}
 
-				temp.erase(0,space);
+				current_message.erase(0,space);
 
 			}
 			else // if there is a space between words.
 			{
 				
-				temp2 = temp.substr(0,space);
+				sub_message = current_message.substr(0,space);
 
 				/* if the next row will go past the edge of the screen then I want to remove the last word in the substring
 				 and replace it with three dots*/
 				if((row + font.Height + 10) > (240 - font.Height))
 				{
-					std::size_t space2 = temp2.find_last_of(" ");
-					temp2.erase(space2+1,temp2.length()-1);
-					temp2.append("...");
+					std::size_t sub_space = sub_message.find_last_of(" ");
+					sub_message.erase(sub_space+1,current_message.length()-1);
+					sub_message.append("...");
 				}
 
-				temp.erase(0,space);
+				current_message.erase(0,space);
 				
 				// delete the space from the split.	
-				if (temp.length() > 3)
+				if (current_message.length() > 3)
 				{
-					temp.erase(0,1);
+					current_message.erase(0,1);
 				}
 
 			}
 			
 			
 			// if the next row will print of the screen then we have counted all the rows that fit on the screen.
-			if((row_if_no_start > (240 - font.Height)) && (page_size == 0))
+			if((row_starting_from_zero > (240 - font.Height)) && (page_size == 0))
 			{
 				page_size = row_num;
 			}
 	
 
 			// provided it won't print off the screen and we reached the start index we print to screen.
-			if ((row < (240 - font.Height)) && (i >= start))
+			if ((row < (240 - font.Height)) && (i >= starting_message))
 			{
-				next_text = const_cast<char*>(temp2.c_str());
-				Paint_DrawString_EN(0, row, next_text, &font, background_color, draw_color);
+				next_message = const_cast<char*>(sub_message.c_str());
+				Paint_DrawString_EN(0, row, next_message, &font, background_color, draw_color);
 
 				row += (font.Height + 10);
 			}
 				
-			row_if_no_start += (font.Height + 10);
+			row_starting_from_zero += (font.Height + 10);
 			row_num++;	
 		}	
 		
 		// if the next row will print of the screen then we have counted all the rows that fit on the screen.
-		if((row_if_no_start > (240 - font.Height)) && (page_size == 0))
+		if((row_starting_from_zero > (240 - font.Height)) && (page_size == 0))
 		{
 			page_size = row_num;
 		}	
 
 		// provided it won't print off the screen and we reached the start index we print to screen.
-		if ((row < (240 - font.Height)) && (i >= start))
+		if ((row < (240 - font.Height)) && (i >= starting_message))
 		{
-			next_text = const_cast<char*>(temp.c_str());
-			Paint_DrawString_EN(0, row, next_text, &font, background_color, draw_color);
+			next_message = const_cast<char*>(current_message.c_str());
+			Paint_DrawString_EN(0, row, next_message, &font, background_color, draw_color);
 	
 			row += (font.Height + 10);
 		}
 		
-		row_if_no_start += (font.Height + 10);
+		row_starting_from_zero += (font.Height + 10);
 		row_num++;
 	}
 
@@ -490,7 +502,7 @@ void LCD_refresh(void)
 	{
 		num_pages = std::to_string((int)(round(row_num/page_size))); /* get number of pages by dividing number of all rows divided by how many rows fit on a page then add one.
 										I don't know why the plus one is needed but the divison will round down*/
-		current_page = std::to_string((int)(floor(start_row/page_size)) + 1); /* get current page by dividing number of rows before start divided by how many rows fit 
+		current_page = std::to_string((int)(floor(starting_row/page_size)) + 1); /* get current page by dividing number of rows before start divided by how many rows fit 
 											on a page then add one*/
 		page = current_page + "/" + num_pages;
 		page_label = const_cast<char*>(page.c_str());
@@ -513,7 +525,7 @@ void LCD_refresh(void)
 			/* provided there is text and the limit of the scroll bar was not reached. 
 			The end of the scroll bar is decided by the number of rows plus the start of the scroll bar. */
 			
-			scroll_bar_start = 45 + (start_row*5);
+			scroll_bar_start = 45 + (starting_row*5);
 		}
 		else
 		{
@@ -521,7 +533,7 @@ void LCD_refresh(void)
 			When this happens I divide the rest of the bar by number of rows
 			times the number of rows before the start row. */
 
-			scroll_bar_start = 45 + (int)(round((180/row_num)*start_row));
+			scroll_bar_start = 45 + (int)(round((180/row_num)*starting_row));
 		}
 
 		scroll_bar_end = 230 - (row_num*5) + (scroll_bar_start - 45);
@@ -596,3 +608,5 @@ void LCD_exit(void)
     	BlackImage = NULL;
 	DEV_ModuleExit();
 }
+
+#endif

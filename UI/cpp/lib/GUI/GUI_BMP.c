@@ -18,8 +18,6 @@
 #include <stdint.h>
 #include <stdlib.h>	//memset
 
-#include "GUI_Paint.h"
-// #include "GUI_Cache.h"
 
 
 UBYTE GUI_ReadBmp(const char *path)

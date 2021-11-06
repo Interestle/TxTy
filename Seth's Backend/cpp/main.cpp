@@ -8,6 +8,7 @@
 #include <stdlib.h>     //exit()
 #include <stdio.h>
 
+#include "../../LoRa/lora.h"
 
 using namespace std;
 
@@ -92,6 +93,12 @@ int main(){
     string curStr;
 
     LCD_INIT();
+
+    int loraTemp = loraInit("/dev/ttyAMA0", 115200);
+    if (loraTemp < 0)
+    {
+      return loraTemp;
+    }
 
     while (1) {
         if (kbhit()){

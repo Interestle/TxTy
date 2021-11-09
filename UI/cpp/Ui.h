@@ -257,7 +257,7 @@ void LCD_messages(std::vector<std::string> &new_messages)
 {
 	messages.clear();
 	messages.insert(messages.end(), new_messages.begin(), new_messages.end());
-	starting_message = messages.size() - 1;
+	//starting_message = messages.size() - 1;
 	LCD_refresh();
 //	printf("page length %f\n", page_size);
 //	printf("number of rows %f\n", row_num);

@@ -25,7 +25,7 @@ endif
 
 
 CC = g++
-MSG = -g -O0 -Wall -pthread -lpigpio -lrt
+MSG = -g -O0 -Wall -pthread -lpigpio -lrt -lncurses
 CFLAGS += $(MSG) $(DEBUG)
 
 ${TARGET}:${OBJ_O}

@@ -3,18 +3,34 @@
 * | Author      :   Seth Jackson   
 * | Info       	: Basic UI using waveshare's example code for the their 2in
 *		  LCD module. It uses 8 fuctions starting with LCD_INIT and 
-*		  LCD_exit both need to be used. The LCD_INIT sets up everything
-*		  needed to start painting but malloc's a pointer that needs
-*		  to be freed in LCD_exit. LCD_set_font takes an int representing
+*		  LCD_exit both need to be used. 
+*
+*		  The LCD_INIT sets up everything needed to start painting but malloc's a pointer that needs
+*		  to be freed in LCD_exit.
+* 
+*		  LCD_messages receives a vector of strings and prints each string on it's own line. 
+*
+*		  LCD_message_box can be used to display the current message being typed. 
+*		  The message will be printed in the box at the bottom of the screen. 
+*
+*		  LCD_set_font takes an int representing
 *		  the font size and will change the text size displayed on the UI
 *		  unless it is not a size I have built in. In that case it will 
-*		  be set to 16. LCD_battery takes an int representing the 
+*		  be set to 16. 
+*
+*		  LCD_battery takes an int representing the 
 *		  percentage of charge left. If the percentage is 20 or less
-*		  it will change the color of the battery icon to red. The LCD_up
+*		  it will change the color of the battery icon to red. 
+*
+*		  The LCD_up
 *		  fuction will move the text up one and the LCD_down moves the text
-*		  down one. LCD_select_message_by_index will jump to a specific text based on index.
+*		  down one. 
+*
+*		  LCD_select_message_by_index will jump to a specific text based on index.
 *		  LCD_dark_mode will change the background to darker colors
 *		  and LCD_light_mode changes the background to lighter colors.
+*		  
+*
 *		  LCD_refresh is mostly just used for the other fuctions
 *		  to display the changes.
 *
@@ -29,6 +45,7 @@
 #ifndef _UI_H_
 #define _UI_H_
 
+//#include "waveshare.h"
 #include "GUI_BMP.h"
 #include <vector>
 #include <string>
@@ -39,6 +56,7 @@
 
 void LCD_INIT(void);
 void LCD_messages(std::vector<std::string> &new_messages);
+void LCD_message_box(std::string text);
 void LCD_set_font(int size); 
 void LCD_battery(int charge);
 void LCD_up(void);
@@ -55,7 +73,10 @@ int battery = 305;
 UWORD background_color = WHITE;
 UWORD draw_color = BLACK;
 UWORD battery_color = GREEN;
-sFONT font = Font16;	
+sFONT font = Font16;
+int message_box_top = 240 - (font.Height + 10);	
+std::vector<std::string> message_box_text;
+std::string current_message_box = " ";
 unsigned int text_limit = 24; // used to help wrap text around screen.
 size_t starting_message = 0; // Index used to select which message is read first. It then prints only the messages after this message.
 double row_num = 0; // used to count all rows. This is needed for page label math.
@@ -94,7 +115,7 @@ void LCD_INIT(void)
     	Paint_NewImage(BlackImage, LCD_2IN_WIDTH, LCD_2IN_HEIGHT, 90, WHITE, 16);
     	Paint_Clear(background_color);
 	Paint_SetRotate(ROTATE_270);
-    	
+
 	// /* GUI */
     	printf("drawing...\r\n");
 	
@@ -199,7 +220,8 @@ void LCD_INIT(void)
 	Paint_Clear(background_color);
     	
 	// /*2.Drawing on the image*/
-
+	
+	message_box_text.push_back(" ");
 	LCD_refresh();	
     
 }
@@ -243,8 +265,8 @@ void LCD_set_font(int size)
 		text_limit = 24;	
 	}
 
-	LCD_refresh();
-	
+	LCD_message_box(current_message_box);	
+	LCD_refresh();	
 
 }
 
@@ -257,10 +279,53 @@ void LCD_messages(std::vector<std::string> &new_messages)
 {
 	messages.clear();
 	messages.insert(messages.end(), new_messages.begin(), new_messages.end());
-	//starting_message = messages.size() - 1;
 	LCD_refresh();
 //	printf("page length %f\n", page_size);
 //	printf("number of rows %f\n", row_num);
+}
+
+void LCD_message_box(std::string text)
+{
+	current_message_box = text;
+	message_box_text.clear();
+	message_box_top = 240 - (font.Height + 10);
+	std::string next_line_of_text;
+	
+	// if the text is larger then the text_limit of the font then it needs to be split into substings smaller then the text_limit.
+	while (text.length() > (text_limit - 2))
+	{
+		std::size_t space = text.find_last_of(" ", text_limit); // find the first space before the text_limit.
+
+		if ((space == std::string::npos) || (space == 0)) // if there is no space or only one at the beginning.
+		{
+			space = text_limit - 1;
+			next_line_of_text = text.substr(0,space);
+			
+			message_box_top -= font.Height;
+			if(message_box_top < 30 + font.Height + 10)
+			{
+				message_box_top += font.Height;
+				text.erase(0,text.length()-1);
+				text.append(" ...");
+				break;
+			}
+			
+			message_box_text.push_back(next_line_of_text);
+			text.erase(0,space);
+		}
+		else // if there is a space between words.
+		{			
+			next_line_of_text = text.substr(0,space);
+			
+			message_box_top -= font.Height;
+
+			message_box_text.push_back(next_line_of_text);
+			text.erase(0,space);
+		}
+	}
+	
+	message_box_text.push_back(text);
+	LCD_refresh();
 }
 
 /*
@@ -420,7 +485,7 @@ void LCD_refresh(void)
 
 				/* if the next row will go past the edge of the screen then I want to remove the last four characters in the substring
 				 and replace it with three dots*/
-				if((row + font.Height + 10) > (240 - font.Height))
+				if((row + font.Height + 10) > (message_box_top - font.Height))
 				{
 					sub_message.erase(sub_message.length()-5,sub_message.length()-1);
 					sub_message.append("...");
@@ -436,7 +501,7 @@ void LCD_refresh(void)
 
 				/* if the next row will go past the edge of the screen then I want to remove the last word in the substring
 				 and replace it with three dots*/
-				if((row + font.Height + 10) > (240 - font.Height))
+				if((row + font.Height + 10) > (message_box_top - font.Height))
 				{
 					std::size_t sub_space = sub_message.find_last_of(" ");
 					sub_message.erase(sub_space+1,current_message.length()-1);
@@ -455,14 +520,14 @@ void LCD_refresh(void)
 			
 			
 			// if the next row will print of the screen then we have counted all the rows that fit on the screen.
-			if((row_starting_from_zero > (240 - font.Height)) && (page_size == 0))
+			if((row_starting_from_zero > (message_box_top - font.Height)) && (page_size == 0))
 			{
 				page_size = row_num;
 			}
 	
 
 			// provided it won't print off the screen and we reached the start index we print to screen.
-			if ((row < (240 - font.Height)) && (i >= starting_message))
+			if ((row < (message_box_top - font.Height)) && (i >= starting_message))
 			{
 				next_message = const_cast<char*>(sub_message.c_str());
 				Paint_DrawString_EN(0, row, next_message, &font, background_color, draw_color);
@@ -475,13 +540,13 @@ void LCD_refresh(void)
 		}	
 		
 		// if the next row will print of the screen then we have counted all the rows that fit on the screen.
-		if((row_starting_from_zero > (240 - font.Height)) && (page_size == 0))
+		if((row_starting_from_zero > (message_box_top - font.Height)) && (page_size == 0))
 		{
 			page_size = row_num;
 		}	
 
 		// provided it won't print off the screen and we reached the start index we print to screen.
-		if ((row < (240 - font.Height)) && (i >= starting_message))
+		if ((row < (message_box_top - font.Height)) && (i >= starting_message))
 		{
 			next_message = const_cast<char*>(current_message.c_str());
 			Paint_DrawString_EN(0, row, next_message, &font, background_color, draw_color);
@@ -593,6 +658,19 @@ void LCD_refresh(void)
 	Paint_DrawRectangle(272, scroll_bar_start, 288, scroll_bar_end, GRAY, DOT_PIXEL_1X1, DRAW_FILL_FULL);
 	Paint_DrawLine(280, 235, 277, 230, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	Paint_DrawLine(280, 235, 283, 230, draw_color, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+        // message box
+	Paint_DrawRectangle(0, message_box_top, 270, 240, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	
+	char* next_line;
+	int line_placement = 5;
+	for (size_t i = 0; i<message_box_text.size(); i++)
+	{
+		std::string message_box_line = message_box_text[i];
+		next_line = const_cast<char*>(message_box_line.c_str());
+		Paint_DrawString_EN(0, (message_box_top + line_placement), next_line, &font,  background_color, draw_color);
+		line_placement += font.Height;	
+	}
 
 	// /*3.Refresh the picture in RAM to LCD*/
     	LCD_2IN_Display((UBYTE *)BlackImage);

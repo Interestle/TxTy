@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 9, 2021
+ * Last updated: November 10, 2021
  */
 
 // How to compile and run:
@@ -43,7 +43,6 @@ int main(void)
 
   std::vector<std::string> savedMessages;
   std::vector<char> currentMessage;
-  int currentMessageLocation;
   int ch;
 
   bool updateScreen;
@@ -64,6 +63,8 @@ int main(void)
         if(currentMessage.size() != 0)
         {
           currentMessage.pop_back();
+          std::string s(currentMessage.begin(), currentMessage.end());
+          LCD_message_box(s);
         }
       }    
       else if(ch == '\n')
@@ -78,21 +79,16 @@ int main(void)
           stringToSend = "U1: " + stringToSend;
           savedMessages.push_back(stringToSend);
           currentMessage.clear();
-
-
-          std::cout << std::endl;
+          LCD_message_box("");
         }            
       }
       else
       {
         currentMessage.push_back(ch);
 
-        std::string textInProgress(currentMessage.begin(), currentMessage.end());
-        savedMessages.push_back(textInProgress);
-        currentMessageLocation = savedMessages.size() - 1;
+        std::string s(currentMessage.begin(), currentMessage.end());
+        LCD_message_box(s);
       }
-      
-      updateScreen = true; 
     } 
 
     // LoRa messages
@@ -111,9 +107,7 @@ int main(void)
     if(updateScreen)
     {
       updateScreen = false;
-
       LCD_messages(savedMessages);
-      savedMessages[currentMessageLocation] = "";
     }
 
 

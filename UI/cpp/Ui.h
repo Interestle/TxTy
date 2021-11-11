@@ -682,6 +682,9 @@ void LCD_refresh(void)
 void LCD_exit(void)
 {
 	/* Module Exit */
+	Paint_Clear(BLACK);
+	// /*3.Refresh the picture in RAM to LCD*/
+    	LCD_2IN_Display((UBYTE *)BlackImage);
     	free(BlackImage);
     	BlackImage = NULL;
 	DEV_ModuleExit();

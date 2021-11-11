@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 10, 2021
+ * Last updated: November 11, 2021
  */
 
 // How to compile and run:
@@ -40,13 +40,19 @@ int main(void)
 
   LCD_INIT();
 
+  uint8_t pageUp, pageDown;
+  int pageUpPin = physPinToGpio(31);
+  int pageDownPin = physPinToGpio(33);
+  pinMode(pageUpPin, INPUT);
+  pinMode(pageDownPin, INPUT);
+
 
   std::vector<std::string> savedMessages;
   std::vector<char> currentMessage;
   int ch;
 
   bool updateScreen;
-  loraMessage fromLora;
+  char fromLora[255] = "";
 
   while (1)
   {
@@ -79,9 +85,9 @@ int main(void)
           stringToSend = "U1: " + stringToSend;
           savedMessages.push_back(stringToSend);
           currentMessage.clear();
+          LCD_message_box("");
 
-
-          std::cout << std::endl;
+          updateScreen = true;
         }            
       }
       else
@@ -94,15 +100,53 @@ int main(void)
     } 
 
     // LoRa messages
-    if(loraReceive(&fromLora) > 0)
+    if(loraReceive(fromLora) > 0)
     {
-      std::string receivedMessage = fromLora.message;
+      std::string loraString(fromLora);
+      
+      std::cout << loraString << std::endl;
 
-      savedMessages.push_back("U2: " + receivedMessage);
-      updateScreen = true; 
+      int found = loraString.find("+RCV=");
+
+      if(found >= 0)
+      {
+
+       int equalSign = loraString.find('=');
+       int firstComma = loraString.find(',');
+       int secondComma = loraString.find(',', firstComma + 1);
+
+
+       //printw("1st: %i\n", firstComma);
+       //printw("2nd: %i\n", secondComma);
+
+       std::string mAS = loraString.substr(equalSign + 1, firstComma - equalSign - 1);
+       std::string mLS = loraString.substr(firstComma + 1, secondComma - firstComma - 1);
+
+       int messageAddr = std::stoi(mAS);
+       int messageLength = std::stoi(mLS);
+      
+       std::string messageData = loraString.substr(secondComma + 1, messageLength);
+       //printw("addr: %i\n", messageAddr);
+       //printw("length: %i\n", messageLength);
+       //std::cout << "MESSAGE: " + messageData << std::endl;
+
+       savedMessages.push_back("U2: " + messageData);
+       updateScreen = true;
+      }
+
     }
+    
 
-    // Additional buttons (?)
+
+    // Additional buttons 
+    pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
+    pageDown = (pageDown << 1) | digitalRead(pageDownPin);
+
+    if(pageUp == 0x3F)
+        LCD_up();
+
+    if(pageDown == 0x3F)
+        LCD_down();
 
     // Update LCD
 

@@ -45,7 +45,8 @@ int32_t loraSleep (int8_t mode);
 
 /* Sending/Receiving */
 int32_t loraSend (uint16_t address, uint8_t payload, char *data);
-int32_t loraReceive (loraMessage *messageData);
+int32_t loraReceive (char* messageData);
+//int32_t loraReceive (loraMessage *messageData);
 
 /* Setters/Getters */
 int32_t loraSetAddress(uint16_t address);
@@ -197,6 +198,35 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
   return 0;
 }
 
+
+/*
+ *
+ *
+ *
+ *
+ */
+int32_t loraReceive (char* messageData)
+{
+  int16_t strdataLength = serDataAvailable(loraHandle);
+  if(strdataLength > 0)
+  {
+    char strdata[strdataLength];
+    int temp = serRead(loraHandle, strdata, strdataLength);
+    if (temp < 0) return temp;
+
+    strcpy(messageData, strdata);
+
+    return 1;
+  }
+  else if(strdataLength < 0)
+  {
+    return strdataLength;
+  }
+  else
+    return 0;
+
+}
+
 /*
  * This function provides the user with received messages, if they are available.
  * This should be called frequently enough that a message does not get overwritten
@@ -211,6 +241,7 @@ int32_t loraSend (uint16_t address, uint8_t payload, char *data)
  *  < 0 indicates failure, 0 indicates no message, > 0 indicates message
  *
  */
+/*
 int32_t loraReceive (loraMessage *messageData)
 {
   if(serDataAvailable(loraHandle))
@@ -226,14 +257,14 @@ int32_t loraReceive (loraMessage *messageData)
     char strRSSI [10];
     char strSNR [10];
 
-    /* Read through the string, and parse only what we want. */
+    * Read through the string, and parse only what we want. *
     int i;
     for (i = 0; i < strdataLength; i++)
     {
-      /* All messages start with "+RCV=", just skip to the important stuff. */
+      * All messages start with "+RCV=", just skip to the important stuff. *
       if (strdata[i] == 'V')
       { 
-        /* Get the sender's address. */
+        * Get the sender's address. *
         i+=2;
         int j = 0;
         
@@ -244,7 +275,7 @@ int32_t loraReceive (loraMessage *messageData)
         }
         strAddr[j] = '\0';
 
-        /* Get the length of the message */
+        * Get the length of the message *
         i = i+j+1;
         j = 0;
 
@@ -255,7 +286,7 @@ int32_t loraReceive (loraMessage *messageData)
         }
         strLength[j] = '\0';
 
-        /* Get the message */
+        * Get the message *
         i = i+j+1;
         temp = atoi(strLength);
 
@@ -265,7 +296,7 @@ int32_t loraReceive (loraMessage *messageData)
         }
         strMessage[j] = '\0';
 
-        /* Get the RSSI */
+        * Get the RSSI *
         i = i+j+1;
         j = 0;
 
@@ -276,7 +307,7 @@ int32_t loraReceive (loraMessage *messageData)
         }
         strRSSI[j] = '\0';
 
-        /* Get the SNR */
+        * Get the SNR *
         i = i+j+1;
         j = 0;
 
@@ -309,6 +340,8 @@ int32_t loraReceive (loraMessage *messageData)
   else
     return 0;
 }
+
+*/
 
 /*
  * This function sets the address of this LoRa module. The module will save it

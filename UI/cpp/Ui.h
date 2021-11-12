@@ -408,7 +408,7 @@ void LCD_up(void)
  */
 void LCD_down(void)
 {
-	if (0 > starting_message)
+	if (0 >= starting_message)
 	{
 		starting_message = 0;
 	}

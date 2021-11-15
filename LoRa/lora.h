@@ -65,7 +65,7 @@ int32_t loraInit (std::string serDevice, uint32_t baud)
   if (loraHandle < 0) return loraHandle;
 
   // Connection established, let's test the LoRa module.
-  char testcmd[] = "AT\r\n"; // Just to supress the warning.
+  char testcmd[] = "AT\r\n"; // Just to suppress the warning.
   temp = serWrite(loraHandle, testcmd, 4);
   if (temp < 0) return temp;
 

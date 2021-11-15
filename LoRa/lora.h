@@ -46,7 +46,7 @@ int32_t loraClose (void);
  *
  * inputs:
  *   serDevice: serial device to use. Either "/dev/ttyAMA0" or "/dev/ttyS0". 
- *              Disable bluetooth so you can use AMA0 since mini UART sucks.
+ *              Disable Bluetooth so you can use AMA0 since mini UART sucks.
  *
  *   baud: baud rate to use. Use 115200 as that's the default for the RYLR896.
  *
@@ -130,8 +130,8 @@ int32_t loraSend (uint16_t address, std::string& message)
  *          know why, blame the OS. That being said, do not call this too 
  *          infrequently either, as that will also have negative consequences.
  *          I also noticed that if you give the SEND command a bad length value,
- *          it will send that to this receive. If that happens, and stoi trys to
- *          convert incorrectly, it will throw an error (signal 6)!
+ *          it will send that to this receive. If that happens, and stoi tries 
+ *          to convert incorrectly, it will throw an error (signal 6)!
  *
  */
 int32_t loraReceive (loraMessage& messageData) 
@@ -197,14 +197,17 @@ int32_t loraReceive (loraMessage& messageData)
  * sleep mode. For some reason, when trying to go into or out of sleep mode,
  * the damn thing likes to spew garbage out onto the serial line, usually
  * just a few newline characters, but still annoying either way. This iteration
- * of the sleep funciton should be able to account for that, as long as whenever
+ * of the sleep function should be able to account for that, as long as whenever
  * you put it into sleep mode, do not access anything until you exit sleep mode.
  * I've added logic to the other functions that do not do anything if it is in
  * sleep mode.
  *
- * intpus:
+ * inputs:
  *   mode: 1 to put the device into sleep mode. Anything else puts it in 
  *         Transmit and Receive mode (default).
+ *
+ * outputs:
+ *   < 0 indicates failure, otherwise it returns its current mode.
  *
  */
 int32_t loraSleep (int8_t mode)
@@ -257,17 +260,17 @@ int32_t loraSleep (int8_t mode)
  * This function will wait for some data on the serial line. If it is there,
  * it will read all of it and place it in the reference of the string input.
  * It is currently configured that after waiting one second, it will return
- * anywas as to avoid an infinite loop. Either way, do not call this function
+ * anyways as to avoid an infinite loop. Either way, do not call this function
  * unless you are expecting an immediate response back.
  *
  * inputs:
  *   s: the string reference to place the bytes from the serial line.
- *   maxWaitTime: the maximum amount of time to wait in microseconds. Defaults to 1 sec.
+ *   maxWaitTime: the maximum amount of time to wait in microseconds. Defaults to 1 sec (could probably make much smaller).
  *
- * outpus:
- *   <=0 indicates failure
- *   ==0 indicates timeout
- *   >=0 indicates success, and amount of characters extracted from serial line.
+ * outputs:
+ *   < 0 indicates failure
+ *   = 0 indicates timeout
+ *   > 0 indicates success, and amount of characters extracted from serial line.
  */
 int32_t loraWaitForData(std::string& s, uint32_t maxWaitTime)
 {
@@ -293,7 +296,7 @@ int32_t loraWaitForData(std::string& s, uint32_t maxWaitTime)
 }
 
 /*
- * This funciton closes the connection to the RYLR896. It should be used when
+ * This function closes the connection to the RYLR896. It should be used when
  * finished using the device, say prior to shutdown or escape. It is not
  * critical, but it is good form. 
  *

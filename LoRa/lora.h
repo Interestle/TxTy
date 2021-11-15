@@ -1,467 +1,314 @@
 #ifndef LORA_H
 #define LORA_H
 
-/******************************************************************************
- * This is a simple REYAX RYLR896 library. My intention is to make this 
- * library easy to use. It's a work in progress, so if there's anything wrong,
- * please let me know!
+/*
+ * This is an updated library for the REYAX RYLR896. This time, I've decided
+ * to write it in C++ for some nice functionality, and hopefully to remove any
+ * accidental warnings between languages.
  *
- * Random collection of thoughts:
- *  > What happens when there are multiple commands sent, are those saved, or 
- *   are they overwritten? I need to test that.
+ * Last updated: November 14, 2021
  *
- *  > If the device is in sleep mode, will it wake up if it is intended to 
- *    receive a message?
- *
- * Last updated: October 7, 2021
- ******************************************************************************/
- 
- /* To use pigpio, run: gcc -Wall -pthread -lpigpio -lrt YOUR_PROGRAM_HERE.c -o executable_name */
+ */
+
 
 #include <pigpio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
-/* TODO: remove when not needed anymore: */
-#include <stdio.h>
+#include <iostream>
+#include <string>
 
-/* Used parameters. Maybe shove them into a struct? Maybe use C++ instead? */
+/* Could wrap this up in a class for better handling, but why be OOP when not needed? */
 static int32_t loraHandle = PI_BAD_HANDLE;
 static int8_t loraMode = -1;
 
-/* Structs */
-typedef struct {
-  uint16_t address;
-  uint8_t length;
-  char message[255];
-  int16_t RSSI;
-  int16_t SNR;
-} loraMessage;
 
-/* Function prototypes */
-int32_t loraInit (char *serDevice, uint32_t baud);
+struct loraMessage {
+  int address;
+  int length;
+  std::string message;
+  int RSSI;
+  int SNR;
+};
+
+
+/* Function Prototypes */
+int32_t loraInit (std::string serDevice, uint32_t baud);
+
+int32_t loraSend (uint16_t address, std::string& message);
+int32_t loraReceive (loraMessage& messageData);
+
 int32_t loraSleep (int8_t mode);
-
-/* Sending/Receiving */
-int32_t loraSend (uint16_t address, uint8_t payload, char *data);
-int32_t loraReceive (char* messageData);
-//int32_t loraReceive (loraMessage *messageData);
-
-/* Setters/Getters */
-int32_t loraSetAddress(uint16_t address);
-int32_t loraGetAddress(void);
+int32_t loraWaitForData (std::string& s, uint32_t maxWaitTime = 1000000);
 
 int32_t loraClose (void);
-
-//static void loraWait(uint32_t maxWaitTime);
-void loraCleanBuffer (void);
-
-
-
 
 /*
  * Basic LoRa initialization function. Must be called before using.
  *
  * inputs:
  *   serDevice: serial device to use. Either "/dev/ttyAMA0" or "/dev/ttyS0". 
- *     Disable bluetooth so you can use AMA0 since mini UART sucks.
+ *              Disable bluetooth so you can use AMA0 since mini UART sucks.
  *
  *   baud: baud rate to use. Use 115200 as that's the default for the RYLR896.
  *
  * outputs:
  *   returns the handle (>=0) if everything went well. <0 indicates failure.
  */
-int32_t loraInit (char *serDevice, uint32_t baud)
+int32_t loraInit (std::string serDevice, uint32_t baud)
 {
-  if (loraHandle >= 0) return loraHandle; 
+  if (loraHandle >= 0) return loraHandle;
 
-  int32_t temp = gpioInitialise();
+  int temp = gpioInitialise();
   if (temp < 0) return temp;
 
-  loraHandle = serOpen(serDevice, baud, 0);
+  int serFlags = 0; // pigpio doesn't use serFlags yet.
+  loraHandle = serOpen(const_cast<char*>(serDevice.c_str()), baud, serFlags);
   if (loraHandle < 0) return loraHandle;
- 
-  /* Connection established, testing RYLR896. */
-  temp = serWrite(loraHandle, "AT\r\n", 4);
+
+  // Connection established, let's test the LoRa module.
+  char testcmd[] = "AT\r\n"; // Just to supress the warning.
+  temp = serWrite(loraHandle, testcmd, 4);
   if (temp < 0) return temp;
 
-  /* This is a busy loop. I'm wondering if there's a better way to do this, *
-   * but haven't thought of anything yet. On average, takes 1.4 ms of time  *
-   * I'm currently thinking of making a helper function that does the busy  *
-   * loop, or if a certain amount of time elapses?                          */
-  while(!serDataAvailable(loraHandle)); 
+  // Wait for response back.
+  std::string s = "";
+  temp = loraWaitForData(s);
+  if (temp < 0) return temp;
 
-  uint8_t strdataLength = serDataAvailable(loraHandle);
-  char strdata [strdataLength];
-  temp = serRead(loraHandle, strdata, strdataLength);
-  if(temp < 0) return temp;
+  if(s.find("+OK\r\n") == std::string::npos) return -1;
 
-  /* For some reason, strcmp does not return 0, but strncmp does return 0    *
-   * when I expect it to. Could it be becuase of '/0'? I tried extending the *
-   * length of strdata, but that didn't seem to help me in this regard.      *
-   * What the hell?                                                          */  
-  if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
- 
-  /* Everything successful, let's get started. */
+  // We're ready to go, let's get started.
   loraMode = 0;
   return loraHandle;  
 }
 
 /*
- * This function tells the RYLR896 to go into sleep mode or awaken from
- * sleep mode. This function will clear the serial buffer to ensure it is
- * in sleep mode.
+ * This function sends a message to the specified address.
  *
  * inputs:
- *   mode: 1 to put the device in sleep mode. Use anything else to put it in
- *     Transmit and Receive mode (default).
+ *   address: the address to send to. Address 0 sends to all addresses from [0,65535].
+ *   message: string to send. Must have a length less than 240.
+ * 
+ * outputs:
+ *   < 0 indicates failure.
+ */
+int32_t loraSend (uint16_t address, std::string& message)
+{
+  if (loraHandle < 0) return loraHandle; // not initialized
+  if (loraMode == 1) return PI_BAD_MODE; // sleeping
+  if (message.length() > 240) return PI_BAD_PARAM;
+
+  std::string toSend = "AT+SEND=" + std::to_string(address) + "," + std::to_string(message.length()) + "," + message + "\r\n";
+
+  int temp = serWrite(loraHandle, const_cast<char*>(toSend.c_str()), toSend.length());
+  if (temp < 0) return temp;
+
+  // Wait for response back.
+  std::string s = "";
+  temp = loraWaitForData(s);
+  if (temp < 0) return temp;
+
+  if(s.find("+OK\r\n") == std::string::npos) return -1;
+
+  return 0;
+}
+
+/*
+ * NEW AND IMPROVED RECEIVE FUNCTION! Give it a loraMessage reference, and it
+ * fills it with the necessary data. It does all the hard stuff for you!
+ *
+ * inputs:
+ *   messageData: loraMessage struct (see above). Contains Address, Length of message,
+ *                the message itself, RSSI, and SNR values.
  *
  * outputs:
- *   <0 indicates error.
+ *   < 0 indicates failure.
+ *   = 0 indicates no received message.
+ *   > 0 indicates message received.
+ *
+ * WARNING: Do not call this function as rapidly as possible, as junk data will
+ *          be in the buffer while the serial line is communicating. I don't 
+ *          know why, blame the OS. That being said, do not call this too 
+ *          infrequently either, as that will also have negative consequences.
+ *          I also noticed that if you give the SEND command a bad length value,
+ *          it will send that to this receive. If that happens, and stoi trys to
+ *          convert incorrectly, it will throw an error (signal 6)!
+ *
+ */
+int32_t loraReceive (loraMessage& messageData) 
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+  int strDataLength = serDataAvailable(loraHandle);
+
+  if (strDataLength > 0)
+  {
+    char strData[strDataLength];
+    int temp = serRead(loraHandle, strData, strDataLength);
+    if (temp < 0) return temp;
+
+    std::string s(strData);
+
+    // Got something, let's make sure it's what we want.
+    int found = s.find("+RCV=");
+    if(found >= 0)
+    {
+      int equalSign = s.find('=', found + 3);
+      int firstComma = s.find(',', equalSign + 1);
+      int secondComma = s.find(',', firstComma + 1);
+
+      std::string sAddress = s.substr(equalSign + 1, firstComma - equalSign - 1);
+      std::string sLength = s.substr(firstComma + 1, secondComma - firstComma - 1);
+
+      int nLength = std::stoi(sLength);
+
+      std::string sMessage = s.substr(secondComma + 1, nLength);
+
+      int secondLastComma = s.find(',', secondComma + nLength + 1);
+      int lastComma = s.find(',', secondLastComma + 1);
+      int cr = s.find('\r', lastComma + 1);
+
+      std::string sRSSI = s.substr(secondLastComma + 1, lastComma - secondLastComma - 1);
+      std::string sSNR = s.substr(lastComma + 1, cr - lastComma - 1);
+
+      // Parsing done, let's give it back!
+      messageData.address = std::stoi(sAddress);
+      messageData.length  = nLength;
+      messageData.message = sMessage;
+      messageData.RSSI    = std::stoi(sRSSI);
+      messageData.SNR     = std::stoi(sSNR);
+
+      return strDataLength;
+    }
+    // If it wasn't there, purge the message, as it wasn't handled adequately.
+    // It probably is a bad idea, but whatever.
+    // std::cout << s << std::endl;
+  }
+  else if (strDataLength < 0)
+  {
+    return strDataLength; 
+  }
+ 
+  return 0;
+}
+
+/*
+ * This function tells the RYLR896 to go into sleep mode or awaken from
+ * sleep mode. For some reason, when trying to go into or out of sleep mode,
+ * the damn thing likes to spew garbage out onto the serial line, usually
+ * just a few newline characters, but still annoying either way. This iteration
+ * of the sleep funciton should be able to account for that, as long as whenever
+ * you put it into sleep mode, do not access anything until you exit sleep mode.
+ * I've added logic to the other functions that do not do anything if it is in
+ * sleep mode.
+ *
+ * intpus:
+ *   mode: 1 to put the device into sleep mode. Anything else puts it in 
+ *         Transmit and Receive mode (default).
+ *
  */
 int32_t loraSleep (int8_t mode)
 {
-  if (loraHandle < 0) return loraHandle;  
+  if (loraHandle < 0) return loraHandle; // Not initialized.
 
-  uint8_t truemode = (mode == 1) ? 1 : 0; 
+  // No need to put it into sleep if it's already asleep.
+  uint8_t truemode = (mode == 1) ? 1 : 0;
   if (loraMode == truemode) return loraMode;
 
-  serWrite(loraHandle, "AT\r\n", 4);
+  // Wake it up, if it isn't already.
+  char testcmd[] = "AT\r\n";
+  int temp = serWrite(loraHandle, testcmd, 4);
+  if (temp < 0) return temp;
 
-  // Possible issue: something already there...
-  // Or doesn't get there!
-  while(!serDataAvailable(loraHandle)); 
+  // Don't care about what's in there, so get rid of it.
+  std::string s = "";
+  loraWaitForData(s);
 
-  loraCleanBuffer();
-
-  /* Since the device is now not in Sleep Mode, let's force it if we should */
-  if(truemode == 1)
+  if (truemode)
   {
-    int temp = serWrite(loraHandle, "AT+MODE=1\r\n", 11);
+    char sleep[] = "AT+MODE=1\r\n";
+    temp = serWrite(loraHandle, sleep, 11);
     if (temp < 0) return temp;
 
-    while(!serDataAvailable(loraHandle));
+    loraWaitForData(s);
 
-    uint8_t strdataLength = serDataAvailable(loraHandle);
-    char strdata [strdataLength];
-    temp = serRead(loraHandle, strdata, strdataLength);
-    if(temp < 0) return temp;
-
-    if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
+    if(s.find("+OK\r\n") == std::string::npos) return -1;    
+  }
+  else
+  {
+    // We're trying to wake it up, so let's send the test 
+    // command a few times to clear the buffer out.
+    bool wakingUp = true;
+    while (wakingUp)
+    {
+      serWrite(loraHandle, testcmd, 4);
+      loraWaitForData(s);
+      if(s.find("+OK\r\n") != std::string::npos) 
+        wakingUp = false;
+    }
   }
 
   loraMode = truemode;
-
   return loraMode;
 }
 
 
 /*
- * This function sends a message to the specified address. 
+ * This function will wait for some data on the serial line. If it is there,
+ * it will read all of it and place it in the reference of the string input.
+ * It is currently configured that after waiting one second, it will return
+ * anywas as to avoid an infinite loop. Either way, do not call this function
+ * unless you are expecting an immediate response back.
  *
  * inputs:
- *   address: the address to send it to. Address 0 sends to all addresses from [0,65535].
- *   payload: the length of the message to send in bytes. Maximum of 240.
- *   data: message to send, ASCII formatted.
+ *   s: the string reference to place the bytes from the serial line.
+ *   maxWaitTime: the maximum amount of time to wait in microseconds. Defaults to 1 sec.
  *
- * outputs:
- *   < 0 indicates failure.
- *
+ * outpus:
+ *   <=0 indicates failure
+ *   ==0 indicates timeout
+ *   >=0 indicates success, and amount of characters extracted from serial line.
  */
-int32_t loraSend (uint16_t address, uint8_t payload, char *data)
-{ 
-  if (loraHandle < 0) return loraHandle;  
-  if (loraMode == 1) return PI_BAD_MODE;
-  if (payload > 240) return PI_BAD_PARAM;
-
-  uint8_t length = strlen(data);
-  if (length > payload) return PI_BAD_PARAM; // Maybe instead a payload, use length of message ?
-
-  char message [260]; // Guarantees large enough buffer.
-
-  sprintf(message, "AT+SEND=%d,%d,%s\r\n",address, payload, data);
-
-  printf("message: %s", message);
-
-  int temp = serWrite(loraHandle, message, strlen(message));
-  if (temp < 0) return temp;
-
-  while(!serDataAvailable(loraHandle)); 
-
-  uint8_t strdataLength = serDataAvailable(loraHandle);
-  char strdata [strdataLength];
-  temp = serRead(loraHandle, strdata, strdataLength);
-  if(temp < 0) return temp;
-
-  if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
-  return 0;
-}
-
-
-/*
- *
- *
- *
- *
- */
-int32_t loraReceive (char* messageData)
+int32_t loraWaitForData(std::string& s, uint32_t maxWaitTime)
 {
-  int16_t strdataLength = serDataAvailable(loraHandle);
-  if(strdataLength > 0)
+  uint8_t strLen = 0;
+  uint32_t startTick, endTick;
+  uint32_t diffTick;
+
+  startTick = gpioTick();
+  while(!(strLen = serDataAvailable(loraHandle)))
   {
-    char strdata[strdataLength];
-    int temp = serRead(loraHandle, strdata, strdataLength);
-    if (temp < 0) return temp;
-
-    strcpy(messageData, strdata);
-
-    return 1;
+    endTick = gpioTick();
+    diffTick = endTick - startTick;
+    // No response after so long, return.
+    if(diffTick >= maxWaitTime) return 0;
   }
-  else if(strdataLength < 0)
-  {
-    return strdataLength;
-  }
-  else
-    return 0;
 
-}
-
-/*
- * This function provides the user with received messages, if they are available.
- * This should be called frequently enough that a message does not get overwritten
- * and lost. Will clear the buffer after receiving one message.
- *
- * CURRENTLY GETTING SIGNAL 11. I'M NOT SURE WHY, MORE INVESTIGATION IS NEEDED!
- *
- * inputs:
- *   messageData: A loraMessage struct. 
- *
- * outputs:
- *  < 0 indicates failure, 0 indicates no message, > 0 indicates message
- *
- */
-/*
-int32_t loraReceive (loraMessage *messageData)
-{
-  if(serDataAvailable(loraHandle))
-  {
-    uint8_t strdataLength = serDataAvailable(loraHandle);
-    char strdata [strdataLength];
-    int temp = serRead(loraHandle, strdata, strdataLength);
-    if (temp < 0) return temp;
-
-    char strAddr [10];
-    char strLength [10];
-    char strMessage [260];
-    char strRSSI [10];
-    char strSNR [10];
-
-    * Read through the string, and parse only what we want. *
-    int i;
-    for (i = 0; i < strdataLength; i++)
-    {
-      * All messages start with "+RCV=", just skip to the important stuff. *
-      if (strdata[i] == 'V')
-      { 
-        * Get the sender's address. *
-        i+=2;
-        int j = 0;
-        
-        while (strdata[i+j] != ',')
-        {
-          strAddr[j] = strdata[i+j];
-          j++;
-        }
-        strAddr[j] = '\0';
-
-        * Get the length of the message *
-        i = i+j+1;
-        j = 0;
-
-        while (strdata[i+j] != ',')
-        {
-          strLength[j] = strdata[i+j];
-          j++;
-        }
-        strLength[j] = '\0';
-
-        * Get the message *
-        i = i+j+1;
-        temp = atoi(strLength);
-
-        for(j = 0; j < temp; j++)
-        {
-          strMessage[j] = strdata[i+j]; 
-        }
-        strMessage[j] = '\0';
-
-        * Get the RSSI *
-        i = i+j+1;
-        j = 0;
-
-        while (strdata[i+j] != ',')
-        {
-          strRSSI[j] = strdata[i+j];
-          j++;
-        }
-        strRSSI[j] = '\0';
-
-        * Get the SNR *
-        i = i+j+1;
-        j = 0;
-
-        while (strdata[i+j] != '\r')
-        {
-          strSNR[j] = strdata[i+j];
-          j++;
-        }
-        strSNR[j] = '\0';
-
-        messageData->address = atoi(strAddr);
-        messageData->length = atoi(strLength);
-        strcpy(messageData->message, strMessage);
-        messageData->RSSI = atoi(strRSSI);
-        messageData->SNR = atoi(strSNR);
-
-        //printf("address: %d\n", messageData->address);
-        //printf("length: %d\n", messageData->length);
-        //printf("message: %s\n", messageData->message);
-        //printf("RSSI: %d\n", messageData->RSSI);
-        //printf("SNR: %d\n", messageData->SNR);
-
-        break;        
-      }
-    }
-
-    loraCleanBuffer();
-    return 1;
-  }
-  else
-    return 0;
-}
-
-*/
-
-/*
- * This function sets the address of this LoRa module. The module will save it
- * in its EEPROM.
- *
- * inputs:
- *
- * outputs:
- *   0 if OK, otherwise failure.
- *
- */
-int32_t loraSetAddress(uint16_t address)
-{
-  if (loraHandle < 0) return loraHandle;
-  if (loraMode == 1) return PI_BAD_MODE;
-
-  char setAddr [20]; // Bigger than it needs to be.
-
-  sprintf(setAddr, "AT+ADDRESS=%d\r\n",address);
-
-  int temp = serWrite(loraHandle, setAddr, strlen(setAddr));
+  char str [strLen];
+  int temp = serRead(loraHandle, str, strLen);
   if (temp < 0) return temp;
 
-  while(!serDataAvailable(loraHandle));
-
-  uint8_t strdataLength = serDataAvailable(loraHandle);
-  char strdata [strdataLength];
-  temp = serRead(loraHandle, strdata, strdataLength);
-  if(temp < 0) return temp;
-
-  if (strncmp(strdata, "+OK\r\n", strdataLength)) return -1;
-  return 0;
+  s = std::string(str);
+  return strLen;
 }
 
-
 /*
- * This function gets the address the LoRa Module has saved in its EEPROM.
+ * This funciton closes the connection to the RYLR896. It should be used when
+ * finished using the device, say prior to shutdown or escape. It is not
+ * critical, but it is good form. 
+ *
+ * DOES NOT TERMINATE pigpio, do that at the end of your program.
  *
  * outputs:
- *  <0 indicates failure, otherwise the address of the module, should be a 
- *    number from [0,65535].
- *
- */
-int32_t loraGetAddress(void)
-{
-  if (loraHandle < 0) return loraHandle;
-  if (loraMode == 1) return PI_BAD_MODE;
-
-  // TODO: Clear the buffer first?
-
-  int temp = serWrite(loraHandle, "AT+ADDRESS?\r\n", 13); 
-  if (temp < 0) return temp;
-
-  while(!serDataAvailable(loraHandle));
-
-  uint8_t strdataLength = serDataAvailable(loraHandle);
-  char strdata [strdataLength];
-  temp = serRead(loraHandle, strdata, strdataLength);
-  if (temp < 0) return temp;
-
-  // The message should be "+ADDRESS=#"
-  printf(":::Message: %s\n", strdata);
-  return -1; // TODO: FIX!
-}
-
-
-/*
- * This function closes connection with the RYLR896. It should be used when  
- * finished using the device, say on shutdown. It's not critical, but it is
- * good form. Does not terminate pigpio.
- *
- * outputs:
- *   0 if OK, otherwise PI_BAD_HANDLE (Did not initialize)
+ *   0 if OK, otherwise PI_BAD_HANDLE (Not initialized)
  */
 int32_t loraClose (void)
 {
-  loraCleanBuffer();
-  int temp = serClose(loraHandle);
+  int oldHandle = loraHandle;
   loraHandle = PI_BAD_HANDLE;
   loraMode = -1;
-  return temp;
+  return serClose(oldHandle);
 }
 
-
-/*
- * Planned helper function for waiting on expected input. Prevents infinite loops.
- *
- * inputs:
- *   maxWaitTime: Maximum amount of time to wait in microseconds.
- *
-static void loraWait(uint32_t maxWaitTime)
-{
-  printf("    Waiting...\n"); //TODO: Remove eventually
-  uint32_t delTime = 0;
-  uint32_t startTick = gpioTick();
-  //TODO: Getting PI_BAD_PARAM, ser parameter likely. I'm doing something wrong...
-  while(!serDataAvailable(loraHandle) && delTime)
-  {
-    delTime = (gpioTick() - startTick) < maxWaitTime;
-  }
-}
-*/
-
-/*
- * This function clears out the buffer of the RYLR896. Certain functions in
- * this file call this to clear it out to ensure it is in a known state.
- * Some commands insert a random newline just to screw with everything.
- * For some reason, each reply from the module adds it to a list in the buffer
- * and doesn't clear it out. It needs investigation.
- */
-void loraCleanBuffer(void)
-{
-  //printf("    cleaning:\n"); //TODO: Remove eventually
-  while(serDataAvailable(loraHandle))
-  {
-    uint8_t len = serDataAvailable(loraHandle);
-    char str [len];
-    serRead(loraHandle, str, len);
-    //printf("    ->%s\n", str); //TODO: Remove eventually
-  }
-}
 
 #endif

@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 11, 2021
+ * Last updated: November 14, 2021
  */
 
 // How to compile and run:
@@ -40,19 +40,20 @@ int main(void)
 
   LCD_INIT();
 
+  // Initialize additional buttons and controls
   uint8_t pageUp, pageDown;
   int pageUpPin = physPinToGpio(31);
   int pageDownPin = physPinToGpio(33);
   pinMode(pageUpPin, INPUT);
   pinMode(pageDownPin, INPUT);
 
-
+  // Various values needed
   std::vector<std::string> savedMessages;
   std::vector<char> currentMessage;
   int ch;
 
   bool updateScreen;
-  char fromLora[255] = "";
+  loraMessage fromLora;
 
   while (1)
   {
@@ -80,7 +81,7 @@ int main(void)
           std::string stringToSend(currentMessage.begin(), currentMessage.end());
           
           int addrToSend = 0;
-          loraSend(addrToSend, stringToSend.size(), (char*) stringToSend.c_str());
+          loraSend(addrToSend, stringToSend);
           
           stringToSend = "U1: " + stringToSend;
           savedMessages.push_back(stringToSend);
@@ -100,40 +101,11 @@ int main(void)
     } 
 
     // LoRa messages
+    // SO MUCH CLEANER THAN BEFORE!!
     if(loraReceive(fromLora) > 0)
     {
-      std::string loraString(fromLora);
-      
-      std::cout << loraString << std::endl;
-
-      int found = loraString.find("+RCV=");
-
-      if(found >= 0)
-      {
-
-       int equalSign = loraString.find('=');
-       int firstComma = loraString.find(',');
-       int secondComma = loraString.find(',', firstComma + 1);
-
-
-       //printw("1st: %i\n", firstComma);
-       //printw("2nd: %i\n", secondComma);
-
-       std::string mAS = loraString.substr(equalSign + 1, firstComma - equalSign - 1);
-       std::string mLS = loraString.substr(firstComma + 1, secondComma - firstComma - 1);
-
-       int messageAddr = std::stoi(mAS);
-       int messageLength = std::stoi(mLS);
-      
-       std::string messageData = loraString.substr(secondComma + 1, messageLength);
-       //printw("addr: %i\n", messageAddr);
-       //printw("length: %i\n", messageLength);
-       //std::cout << "MESSAGE: " + messageData << std::endl;
-
-       savedMessages.push_back("U2: " + messageData);
+       savedMessages.push_back("U2: " + fromLora.message);
        updateScreen = true;
-      }
-
     }
     
 
@@ -154,12 +126,8 @@ int main(void)
     {
       updateScreen = false;
       LCD_messages(savedMessages);
-    }
-
-
-    
+    }    
   }
-
   return 0;
 }
 
@@ -168,6 +136,7 @@ void txtyExit(int exitCode)
 {
   endwin();
   loraClose();
+  gpioTerminate();
   LCD_exit();
   exit(exitCode);
 }

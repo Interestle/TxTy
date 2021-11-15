@@ -36,6 +36,15 @@ int32_t loraInit (std::string serDevice, uint32_t baud);
 int32_t loraSend (uint16_t address, std::string& message);
 int32_t loraReceive (loraMessage& messageData);
 
+// int32_t loraSetAddress (uint16_t addr);
+// int32_t loraGetAddress (void);
+
+// int32_t loraSetNetworkID (uint8_t id);
+// int32_t loraGetNetworkID (void);
+
+// int32_t loraSetRFParameter (uint16_t parameters);
+// int32_t loraGetRFParameter (void);
+
 int32_t loraSleep (int8_t mode);
 int32_t loraWaitForData (std::string& s, uint32_t maxWaitTime = 1000000);
 
@@ -191,6 +200,84 @@ int32_t loraReceive (loraMessage& messageData)
  
   return 0;
 }
+
+/*
+ * This function sets the address that the LoRa module will use.
+ *
+ * inputs:
+ *   addr: unsigned 16-bit integer representing all possible addresses to use.
+ *
+ * outputs:
+ *   < 0 indicates failure.
+ *
+ * /
+int32_t loraSetAddress (uint16_t addr) 
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+  
+  std::string toSend = "AT+ADDRESS=" + std::to_string(addr) + "\r\n";
+  int temp = serWrite(loraHandle, const_cast<char*>(toSend.c_str()), toSend.length());
+  if (temp < 0) return temp;
+  
+  // Wait for response back.
+  std::string s = "";
+  temp = loraWaitForData(s);
+  if (temp < 0) return temp;
+  
+  if(s.find("OK\r\n") == std::string::npos) return -1;
+  
+  return 0;
+  
+}
+*/ // TODO: remove when ready.
+
+
+
+/*
+ *
+ *
+ * /
+int32_t loraGetAddress (void)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+  
+  std::string cmd = "AT+ADDRESS?\r\n";
+  int temp = serWrite(loraHandle, const_cast<char*>(cmd.c_str()), cmd.length());
+  if (temp < 0) return temp;
+  
+  // TODO: Continue from here
+  
+  
+  	
+}
+ */ // TODO: remove when ready.
+ 
+/*
+ *
+ *
+ */
+// int32_t loraSetNetworkID (uint8_t id){}
+
+/*
+ *
+ *
+ */
+// int32_t loraGetNetworkID (void){}
+
+/*
+ *
+ *
+ */
+// int32_t loraSetRFParameter (uint16_t parameters){}
+
+/*
+ *
+ *
+ */
+// int32_t loraGetRFParameter (void){}
+
 
 /*
  * This function tells the RYLR896 to go into sleep mode or awaken from

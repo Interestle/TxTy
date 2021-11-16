@@ -19,6 +19,8 @@
 /* Could wrap this up in a class for better handling, but why be OOP when not needed? */
 static int32_t loraHandle = PI_BAD_HANDLE;
 static int8_t loraMode = -1;
+static uint16_t loraAddress = 0xBEEF;
+static int8_t loraNetworkID = -1;
 
 
 struct loraMessage {
@@ -33,14 +35,14 @@ struct loraMessage {
 /* Function Prototypes */
 int32_t loraInit (std::string serDevice, uint32_t baud);
 
-int32_t loraSend (uint16_t address, std::string& message);
+int32_t loraSend (uint16_t address, std::string message);
 int32_t loraReceive (loraMessage& messageData);
 
-// int32_t loraSetAddress (uint16_t addr);
-// int32_t loraGetAddress (void);
+int32_t loraSetAddress (uint16_t addr);
+int32_t loraGetAddress (void);
 
-// int32_t loraSetNetworkID (uint8_t id);
-// int32_t loraGetNetworkID (void);
+int32_t loraSetNetworkID (int8_t id);
+int32_t loraGetNetworkID (void);
 
 // int32_t loraSetRFParameter (uint16_t parameters);
 // int32_t loraGetRFParameter (void);
@@ -51,7 +53,9 @@ int32_t loraWaitForData (std::string& s, uint32_t maxWaitTime = 1000000);
 int32_t loraClose (void);
 
 /*
- * Basic LoRa initialization function. Must be called before using.
+ * Basic LoRa initialization function. Must be called before using. 
+ * Initializes the device with an address of 0 (it receives all messages).
+ * Initializes with Network ID of 0 (public)
  *
  * inputs:
  *   serDevice: serial device to use. Either "/dev/ttyAMA0" or "/dev/ttyS0". 
@@ -85,6 +89,13 @@ int32_t loraInit (std::string serDevice, uint32_t baud)
 
   if(s.find("+OK\r\n") == std::string::npos) return -1;
 
+  // Can communicate, set default Address, Network ID.
+  temp = loraSetAddress(0);
+  if (temp < 0) return temp;
+
+  temp = loraSetNetworkID(0);
+  if (temp < 0) return temp;
+
   // We're ready to go, let's get started.
   loraMode = 0;
   return loraHandle;  
@@ -100,7 +111,7 @@ int32_t loraInit (std::string serDevice, uint32_t baud)
  * outputs:
  *   < 0 indicates failure.
  */
-int32_t loraSend (uint16_t address, std::string& message)
+int32_t loraSend (uint16_t address, std::string message)
 {
   if (loraHandle < 0) return loraHandle; // not initialized
   if (loraMode == 1) return PI_BAD_MODE; // sleeping
@@ -116,7 +127,7 @@ int32_t loraSend (uint16_t address, std::string& message)
   temp = loraWaitForData(s);
   if (temp < 0) return temp;
 
-  if(s.find("+OK\r\n") == std::string::npos) return -1;
+  if(s.find("+OK") < 0) return -1;
 
   return 0;
 }
@@ -202,7 +213,8 @@ int32_t loraReceive (loraMessage& messageData)
 }
 
 /*
- * This function sets the address that the LoRa module will use.
+ * This function sets the address that the LoRa module will use. The address
+ * is used to identify the transmitter or receiver in a message.
  *
  * inputs:
  *   addr: unsigned 16-bit integer representing all possible addresses to use.
@@ -210,61 +222,99 @@ int32_t loraReceive (loraMessage& messageData)
  * outputs:
  *   < 0 indicates failure.
  *
- * /
+ */
 int32_t loraSetAddress (uint16_t addr) 
 {
   if (loraHandle < 0) return loraHandle;
   if (loraMode == 1) return PI_BAD_MODE;
+  if (loraAddress == addr) return loraAddress;
   
   std::string toSend = "AT+ADDRESS=" + std::to_string(addr) + "\r\n";
+
   int temp = serWrite(loraHandle, const_cast<char*>(toSend.c_str()), toSend.length());
   if (temp < 0) return temp;
-  
+ 
   // Wait for response back.
   std::string s = "";
   temp = loraWaitForData(s);
   if (temp < 0) return temp;
+ 
+  if(s.find("+OK\r\n") < 0) return -1;
+
+  // Everything successful, let's keep track of changes.
+  loraAddress = addr;
   
-  if(s.find("OK\r\n") == std::string::npos) return -1;
-  
-  return 0;
-  
+  return loraAddress;  
 }
-*/ // TODO: remove when ready.
-
-
 
 /*
+ * This function returns the current address of the device that it is using.
  *
- *
- * /
+ * outputs: < 0 indicates failure, >= 0 indicates current address being used.
+ */
 int32_t loraGetAddress (void)
 {
   if (loraHandle < 0) return loraHandle;
   if (loraMode == 1) return PI_BAD_MODE;
   
-  std::string cmd = "AT+ADDRESS?\r\n";
-  int temp = serWrite(loraHandle, const_cast<char*>(cmd.c_str()), cmd.length());
-  if (temp < 0) return temp;
-  
-  // TODO: Continue from here
-  
-  
-  	
+  // The old way took advantage of asking the module directly. That sucked,
+  // so instead, let's just keep track of the address locally. It just means
+  // we should set it upon initialization as well.
+  return loraAddress;
 }
- */ // TODO: remove when ready.
  
 /*
+ * This function sets the ID of the LoRa network. This is a group function. 
+ * Only modules connected to the same nework ID can communicate with each other.
  *
+ * inputs:
+ *   id: integer value ranging from 0-15. Network 0 is the public ID of LoRa.
+ *
+ * outputs: < 0 indicates failure.
  *
  */
-// int32_t loraSetNetworkID (uint8_t id){}
+int32_t loraSetNetworkID (int8_t id)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+  if (id < 0) return id;
+  if (loraNetworkID == id) return loraNetworkID;
+
+  // Force good values.
+  int8_t trueID = id & 0xF;
+
+  std::string toSend = "AT+NETWORKID=" + std::to_string(trueID) + "\r\n";
+
+  int temp = serWrite(loraHandle, const_cast<char*>(toSend.c_str()), toSend.length());
+  if (temp < 0) return temp;
+
+  // Wait for response back.
+  std::string s = "";
+  temp = loraWaitForData(s);
+  if (temp < 0) return temp;
+
+  if (s.find("+OK\r\n") < 0) return -1;
+
+  // Everything successful, save changes.
+  loraNetworkID = trueID;
+
+  return loraNetworkID;
+}
 
 /*
+ * This function retrieves the Network ID used by the LoRa module.
  *
- *
+ * outputs:
+ *   < 0 indicates failure
+ *  >= 0 indicates Network ID.
  */
-// int32_t loraGetNetworkID (void){}
+int32_t loraGetNetworkID (void)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+  return loraNetworkID;
+}
 
 /*
  *
@@ -374,6 +424,8 @@ int32_t loraWaitForData(std::string& s, uint32_t maxWaitTime)
     if(diffTick >= maxWaitTime) return 0;
   }
 
+  if (strLen < 0) return strLen;
+
   char str [strLen];
   int temp = serRead(loraHandle, str, strLen);
   if (temp < 0) return temp;
@@ -397,6 +449,8 @@ int32_t loraClose (void)
   int oldHandle = loraHandle;
   loraHandle = PI_BAD_HANDLE;
   loraMode = -1;
+  loraAddress = 0xBEEF;
+  loraNetworkID = -1;
   return serClose(oldHandle);
 }
 

@@ -1,55 +1,140 @@
+/*
+ * Simple test suite for the LoRa module.
+ *
+ * to compile: g++ -Wall -pthread -lpigpio -lrt lora_test.cpp -o YOUR_EXE
+ *             sudo ./YOUR_EXE
+ *
+ * Last Updated: November 14, 2021
+ *
+ */
+
 
 #include "lora.h"
 #include <iostream>
 #include <string>
 
+int testWait(void);
+int testAddress(void);
+int testNetworkID(void);
+int testSend(void);
+//int testReceive(void);
+//int testSleep(void);
+
+int exitTest(int val);
+
 int main(void)
 {
   std::cout << "Testing the LoRa module:" << std::endl;
   int handle = loraInit("/dev/ttyAMA0", 115200);
-  std::cout << "\tInitialized with handle: " + std::to_string(handle) << std::endl;
- 
+  if (handle < 0) return exitTest(handle);
+
+  bool tWait = true; 
+  bool tAddress = true;
+  bool tNetworkID = true;
+
+  bool tSend = true;
+  //bool tReceive = true;
+
+
+  int testCode;
+  if (tWait && ((testCode = testWait()) < 0))
+  {
+    std::cout << "\t\ttestWait Failed with code: " << std::to_string(testCode) << std::endl;
+    return exitTest(testCode);
+  }
+
+  if (tAddress && ((testCode = testAddress()) < 0))
+  {
+    std::cout << "\t\ttestAddress Failed with code: " << std::to_string(testCode) << std::endl;
+    return exitTest(testCode);
+  }
+
+  if (tNetworkID && ((testCode = testNetworkID()) < 0))
+  {
+    std::cout << "\t\ttestNetworkID Failed with code: " << std::to_string(testCode) << std::endl;
+    return exitTest(testCode);
+  }
+
+  // Address should be 5, NetworkID should be 0 now.
+
+  if (tSend && ((testCode = testSend()) < 0))
+  {
+    std::cout << "\t\ttestSend Failed with code: " << std::to_string(testCode) << std::endl;
+    return exitTest(testCode);
+  }
+
+  return exitTest(0);
+}
+
+int testWait(void)
+{
   std::cout << "\tTesting WaitForData with no expected response: " << std::endl;
   std::string s = "";
-  loraWaitForData(s);
-/*
-  std::cout << "\tTesting Sleep:" << std::endl;
-  loraSleep(0);
-  loraSleep(1);
-  gpioSleep(PI_TIME_RELATIVE, 5, 0);
-  loraSleep(0);
+  return loraWaitForData(s);
+}
 
-  std::cout << "\tTesting Sending:" << std::endl;
-  loraSend(5, "Hello!");
-  gpioSleep(PI_TIME_RELATIVE, 1, 0);
-  loraSend(5, "Testing!");
-*/
-  std::cout << "\tTesting Receiving:" << std::endl;
-
-  uint32_t startTick, endTick;
-  uint32_t diffTick;
-
-  loraMessage messy;
-
-  startTick = gpioTick();
-  while(diffTick < 30000000)
-  {
-    if(loraReceive(messy) > 0)
-    {
-      std::cout << "ADDR: " << messy.address << std::endl;
-      std::cout << "LEN: "  << messy.length << std::endl;
-      std::cout << "MESS: " << messy.message << std::endl;
-      std::cout << "RSSI: " << messy.RSSI << std::endl;
-      std::cout << "SNR: "  << messy.SNR << std::endl;
-    }
-    gpioDelay(500000);
-    endTick = gpioTick();
-    diffTick = endTick - startTick;
-  }
+int testAddress(void)
+{
+  std::cout << "\tTesting Address Manipulation" << std::endl;
+  if (loraGetAddress() != 0)
+    return loraGetAddress();
   
+  uint16_t newAddr = 5;
+  int check = loraSetAddress(newAddr);
+  if (check != newAddr)
+    return check;
 
-  std::cout << "Closing the LoRa module:" << std::endl;
-  loraClose();
-  gpioTerminate(); // Close gpio library.
+  if (loraGetAddress() != newAddr)
+    return loraGetAddress();
+
   return 0;
+}
+
+int testNetworkID(void)
+{
+  std::cout << "\tTesting Network ID Manipulation" << std::endl;
+
+  if (loraGetNetworkID() != 0)
+    return loraGetNetworkID();
+
+  int8_t newID = 5;
+  int check = loraSetNetworkID(newID);
+  if (check != newID)
+    return check;
+
+  if (loraGetNetworkID() != newID)
+    return loraGetNetworkID();
+
+  newID = 0;
+  check = loraSetNetworkID(newID);
+  if (check != newID)
+    return check;
+
+  return 0;
+}
+
+int testSend(void)
+{
+  std::cout << "\tTesting Sending" << std::endl;
+
+  int temp = loraSend(0, "1: HELLO!");
+  if (temp < 0) return temp;
+
+  gpioDelay(50000);
+
+  temp = loraSend(5, "2: 50 ms later...");
+  if (temp < 0) return temp;
+
+  gpioDelay(5000);
+
+  return 0;
+}
+//int testReceive(void);
+
+int exitTest(int val)
+{
+  std::cout << "Closing the LoRa module with value: " << std::to_string(val) << std::endl;
+  loraClose();
+  gpioTerminate();
+  return val;
 }

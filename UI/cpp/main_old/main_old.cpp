@@ -242,8 +242,8 @@ std::string txtyCommand(std::string& command)
 
   // I just wanted a silly command that isn't documented.
   else if(command.find("!why") == 0)
-  { // type 'why' into MATLAB.
-    return txtyWhy();
+  { // type 'why' into MATLAB. This is the first one I got:
+    return "For the love of Pete.";  
   }
   
   else if(command.find("!help") == 0)

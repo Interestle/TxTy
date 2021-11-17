@@ -30,13 +30,15 @@
 *		  LCD_dark_mode will change the background to darker colors
 *		  and LCD_light_mode changes the background to lighter colors.
 *		  
+*		  LCD_NETWORKID will change the displayed network id at the top left of the screen.
+*		  and LCD_LORA_ADDRESS will change the address displayed to the right of it.
 *
 *		  LCD_refresh is mostly just used for the other fuctions
 *		  to display the changes.
 *
 *----------------
-* |	This version:   V1.2
-* | Date        :   2021-11-6
+* |	This version:   V2.0
+* | Date        :   2021-11-17
 * | Info        :
 *
 ******************************************************************************/
@@ -64,10 +66,14 @@ void LCD_select_message_by_index(int message_index);
 void LCD_down(void);
 void LCD_dark_mode();
 void LCD_light_mode();
+void LCD_NETWORKID(int new_netId);
+void LCD_LORA_ADDRESS(int new_address);
 void LCD_refresh(void);
 void LCD_exit(void);
 
 UWORD *BlackImage;
+std::string netId = "0";
+std::string address = "0";
 std::vector<std::string> messages;
 int battery = 305;
 UWORD background_color = WHITE;
@@ -445,6 +451,23 @@ void LCD_light_mode()
 	LCD_refresh();
 }
 
+/*
+ * changes displayed network ID.
+ */
+void LCD_NETWORKID(int new_netId)
+{
+	netId = std::to_string(new_netId);
+	LCD_refresh();
+}
+
+/*
+ * changes displayed address.
+ */
+void LCD_LORA_ADDRESS(int new_address)
+{
+	address = std::to_string(new_address);
+	LCD_refresh();
+}
 
 /*
  * Refresh screen.
@@ -625,13 +648,15 @@ void LCD_refresh(void)
 		scroll_bar_start = scroll_bar_end - 5;
 	}
 	
-	// Power label
-	Paint_DrawRectangle(0, 0, 100, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(10, 10, "power", &Font16,  background_color, draw_color);	
+	// network ID label
+	std::string netIdLabel = "ID: " + netId;
 	
-	// Reset label
+	Paint_DrawRectangle(0, 0, 100, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(10, 10, const_cast<char*>(netIdLabel.c_str()), &Font16,  background_color, draw_color);	
+	
+	// Address label
 	Paint_DrawRectangle(100, 0, 200, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(110, 10, "reset", &Font16, background_color, draw_color);	
+	Paint_DrawString_EN(110, 10, const_cast<char*>(address.c_str()), &Font16, background_color, draw_color);	
 
 	// Page label
 	Paint_DrawRectangle(200, 0, 260, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);

@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 15, 2021
+ * Last updated: November 17, 2021
  */
 
 // How to compile and run:
@@ -23,9 +23,14 @@
 #include <exception>
 #include <ncurses.h>
 
+/* Functions */
 std::string txtyCommand(std::string& command);
 std::string txtyWhy(void);
 void txtyExit(int exitCode);
+
+/* Nasty global variable */
+uint16_t addrToSend;
+
 
 int main(void)
 {
@@ -39,6 +44,7 @@ int main(void)
   // Initialize LoRa and LCD
   int loraHandle = loraInit("/dev/ttyAMA0", 115200);
   if (loraHandle < 0) return -1;
+  addrToSend = 0;
 
   // int networkID = loraGetNetworkID();
   // int currentAddress = loraGetAddress();
@@ -95,12 +101,12 @@ int main(void)
 
           if ((stringToSend[0] == '!') && (stringToSend.length() > 1))
           {
+            // No good way to clear out the screen in function, just do here.
             if(stringToSend == "!clear") savedMessages.clear();
             else savedMessages.push_back(txtyCommand(stringToSend));
           }
           else
           {
-            int addrToSend = 0;
             loraSend(addrToSend, stringToSend);
           
             stringToSend = "U1: " + stringToSend;
@@ -220,30 +226,52 @@ std::string txtyCommand(std::string& command)
     return "Going into light mode!";
   }
 
-/*
+
   // TODO: These commands
   else if(command.find("!sendto:" == 0))
   {
+    // Force compliance.
+    addrToSend = parameter & 0xFFFF;
+    return "Sending to:" + std::to_string(parameter & 0xFFFF) + ".";
 
   }
-
+/*
   else if(command.find("!font:" == 0))
   {
     // make sure font is reasonable size
     //LCD_set_font(size);
   }
-
+*/
   else if(command.find("!range" == 0))
   {
-    // NOT implemented yet.
+    int currentParam = loraGetRFParameter();
+    if (currentParam < 0) return "ERROR: Using incorrect RF parameter?";
 
+    uint16_t nNextRange; 
+    std::string sNextRange;
+    
+    if (currentParam == LORA_RF_S)
+    {
+      nNextRange = LORA_RF_L;
+      sNextRange = "long";
+    }
+    else
+    {
+      nNextRange = LORA_RF_S;
+      sNextRange = "short";
+    }
+
+    int temp = loraSetRFParameter(nNextRange);
+    if (temp < 0) return "ERROR: RF FAILED to set. Code: " + std::to_string(temp) + ".";
+
+    return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
-*/
+
 
   // I just wanted a silly command that isn't documented.
   else if(command.find("!why") == 0)
-  { // type 'why' into MATLAB. This is the first one I got:
-    return "For the love of Pete.";  
+  { // type 'why' into MATLAB.
+    return txtyWhy();
   }
   
   else if(command.find("!help") == 0)
@@ -255,12 +283,12 @@ std::string txtyCommand(std::string& command)
 }
 
 /*
- * I called the why command in MATLAB a few times. Here are a few bangers, or
- * a few I thought were good enough to add here. 
+ * I called the why command in MATLAB a few times. Here are a few of my
+ * favorites or a few I thought were good enough to add here. 
  */
 std::string txtyWhy(void)
-{
-  switch(gpioTick() & 0xF)
+{ 
+  switch(gpioTick() & 0xF) // Super good RNG
   {
     case 0x0: return "For the love of Pete.";
     case 0x1: return "A not excessively tall and not very good engineer knew it was a good idea.";
@@ -271,7 +299,7 @@ std::string txtyWhy(void)
     case 0x6: return "Some terrified hamster suggested it.";
     case 0x7: return "Why not?";
     case 0x8: return "Can you rephrase that?";
-    case 0x9: return "I dunno!";
+    case 0x9: return "I dunno.";
     case 0xA: return "Joe knew it was a good idea.";
     case 0xB: return "For her approval.";
     case 0xC: return "Ask again later.";
@@ -281,7 +309,7 @@ std::string txtyWhy(void)
   }
 
   // Shouldn't get here, but have a return anyways.
-  return "";
+  return "?";
 }
 
 

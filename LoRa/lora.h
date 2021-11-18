@@ -347,6 +347,13 @@ int32_t loraSetRFParameter (uint16_t parameters)
   if (loraHandle < 0) return loraHandle;
   if (loraMode == 1) return PI_BAD_MODE;
 
+  // Get all of the parameters, convert them to their characters, and make the command.
+  // char spreadingFactor = ((parameters & 0xF000) >> 12);
+  // char bandwidth       = ((parameters & 0x0F00) >>  8);
+  // char codingRate      = ((parameters & 0x00F0) >>  4);
+  // char preamble        =  (parameters & 0x000F); 
+  // std::string toSend = "AT+PARAMETER=" + /*converted parameters*/ + "\r\n";
+
 
   // Could do all of that above, but let's just enforce good input.
   std::string toSend;

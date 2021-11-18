@@ -55,9 +55,10 @@ int main(void)
   pinMode(pageUpPin, INPUT);
   pinMode(pageDownPin, INPUT);
 
-  // Battery indicator is a single pin on the charger, if it is TODO,
+  // Battery indicator is a single pin on the charger, if it is 0,
+  // it's gonna die soon (~3.2 V)
   // Tell the battery is low.
-  // int batteryPin = physPinToGpio(x);
+  // int batteryPin = physPinToGpio(TODO:FINDPIN);
   // pinMode(batteryPin, INPUT);
 
   // Various values needed
@@ -105,6 +106,9 @@ int main(void)
           
             stringToSend = "U1: " + stringToSend;
             savedMessages.push_back(stringToSend);
+
+            // Append message to history file.
+            // TODO
           }
           
           currentMessage.clear();
@@ -287,6 +291,11 @@ std::string txtyCommand(std::string& command)
   else if(command.find("!why") == 0)
   { // type 'why' into MATLAB.
     return txtyWhy();
+  }
+
+  else if(command.find("!shutdown") == 0)
+  {
+    //TODO: implement
   }
   
   else if(command.find("!help") == 0)

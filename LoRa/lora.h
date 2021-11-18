@@ -6,7 +6,7 @@
  * to write it in C++ for some nice functionality, and hopefully to remove any
  * accidental warnings between languages.
  *
- * Last updated: November 14, 2021
+ * Last updated: November 17, 2021
  *
  */
 
@@ -16,13 +16,17 @@
 #include <iostream>
 #include <string>
 
+#define LORA_RF_S 0xA717
+#define LORA_RF_L 0xC417
+
 /* Could wrap this up in a class for better handling, but why be OOP when not needed? */
 static int32_t loraHandle = PI_BAD_HANDLE;
 static int8_t loraMode = -1;
 static uint16_t loraAddress = 0xBEEF;
 static int8_t loraNetworkID = -1;
+static uint16_t loraRFParameter = 0;
 
-
+/* Simple struct to use for receiving messages. */
 struct loraMessage {
   int address;
   int length;
@@ -44,8 +48,8 @@ int32_t loraGetAddress (void);
 int32_t loraSetNetworkID (int8_t id);
 int32_t loraGetNetworkID (void);
 
-// int32_t loraSetRFParameter (uint16_t parameters);
-// int32_t loraGetRFParameter (void);
+int32_t loraSetRFParameter (uint16_t parameters);
+int32_t loraGetRFParameter (void);
 
 int32_t loraSleep (int8_t mode);
 int32_t loraWaitForData (std::string& s, uint32_t maxWaitTime = 1000000);
@@ -89,11 +93,14 @@ int32_t loraInit (std::string serDevice, uint32_t baud)
 
   if(s.find("+OK\r\n") == std::string::npos) return -1;
 
-  // Can communicate, set default Address, Network ID.
+  // Can communicate, set default Address, Network ID, and RF parameters.
   temp = loraSetAddress(0);
   if (temp < 0) return temp;
 
   temp = loraSetNetworkID(0);
+  if (temp < 0) return temp;
+
+  temp = loraSetRFParameter(LORA_RF_S);
   if (temp < 0) return temp;
 
   // We're ready to go, let's get started.
@@ -317,16 +324,71 @@ int32_t loraGetNetworkID (void)
 }
 
 /*
+ * This function sets the RF parameters of the RYLR896. The intention behind 
+ * it is that we can these parameters however we want. However, I don't feel
+ * like spending the time and getting it perfect. Instead, the input can 
+ * either be LORA_RF_S or LORA_RF_L.
  *
+ * inputs:
+ *   parameters: these are the parameters to send to the LoRa module. There are
+ *     four parameters, each less than the value of 15, so each nybble of the
+ *     parameters input corresponds to these parameters. They go as following:
+ *     0x[4][3][2][1]
+ *     [4] Spreading Factor. The larger, better sensitivity, but slower. [7-12]
+ *     [3] Bandwidth. Smaller bandwidth means more sensitive, but slower.[ 0-9]
+ *     [2] Coding Rate. ??? Always set to 1.                             [ 1-4]
+ *     [1] Preamble code. Bigger loses less data.                        [ 4-7]
+ *
+ * outputs: <0 indicates failure.
  *
  */
-// int32_t loraSetRFParameter (uint16_t parameters){}
+int32_t loraSetRFParameter (uint16_t parameters)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+
+  // Could do all of that above, but let's just enforce good input.
+  std::string toSend;
+
+  if (parameters == LORA_RF_S)
+    toSend = "AT+PARAMETER=10,7,1,7\r\n";
+  else if (parameters == LORA_RF_L)
+    toSend = "AT+PARAMETER=12,4,1,7\r\n";
+  else
+    return PI_BAD_PARAM;
+
+  // Send to LoRa.
+  int temp = serWrite(loraHandle, const_cast<char*>(toSend.c_str()), toSend.length());
+  if (temp < 0) return temp;
+
+  // Wait for response back.
+  std::string s = "";
+  temp = loraWaitForData(s);
+  if (temp < 0) return temp;
+
+  if (s.find("+OK\r\n") < 0) return -1;
+
+  loraRFParameter = parameters;
+  return loraRFParameter;
+}
 
 /*
+ * This function retrieves the RF parameters used by the LoRa module.
+ * Devices using different RF parameters can not communicate!
  *
+ * outputs:
+ *   <= 0 indicates failure, otherwise the value should either be LORA_RF_S or
+ *       LORA_RF_L!
  *
  */
-// int32_t loraGetRFParameter (void){}
+int32_t loraGetRFParameter (void)
+{
+  if (loraHandle < 0) return loraHandle;
+  if (loraMode == 1) return PI_BAD_MODE;
+
+  return loraRFParameter;
+}
 
 
 /*

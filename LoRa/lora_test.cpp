@@ -16,6 +16,7 @@
 int testWait(void);
 int testAddress(void);
 int testNetworkID(void);
+int testRFParam(void);
 int testSend(void);
 //int testReceive(void);
 //int testSleep(void);
@@ -31,7 +32,7 @@ int main(void)
   bool tWait = true; 
   bool tAddress = true;
   bool tNetworkID = true;
-
+  bool tRFParam = true;
   bool tSend = true;
   //bool tReceive = true;
 
@@ -52,6 +53,12 @@ int main(void)
   if (tNetworkID && ((testCode = testNetworkID()) < 0))
   {
     std::cout << "\t\ttestNetworkID Failed with code: " << std::to_string(testCode) << std::endl;
+    return exitTest(testCode);
+  }
+
+  if (tRFParam && ((testCode = testRFParam()) < 0))
+  {
+    std::cout << "\t\ttestRFParam Failed with code: " << std::to_string(testCode) << std::endl;
     return exitTest(testCode);
   }
 
@@ -109,6 +116,23 @@ int testNetworkID(void)
   check = loraSetNetworkID(newID);
   if (check != newID)
     return check;
+
+  return 0;
+}
+
+int testRFParam(void)
+{
+  std::cout << "\tTesting RF Parameters" << std::endl;
+
+  if (loraGetRFParameter() != LORA_RF_S)
+    return 0xFFFF0000 & loraGetRFParameter();
+
+  if (loraSetRFParameter(LORA_RF_L) != LORA_RF_L)
+    return 0xFFFF0000 & LORA_RF_L;
+
+  if (loraGetRFParameter() != LORA_RF_L)
+    return 0xFFFF0000 & loraGetRFParameter();
+
 
   return 0;
 }

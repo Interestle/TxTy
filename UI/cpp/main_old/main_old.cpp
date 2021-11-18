@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 17, 2021
+ * Last updated: November 18, 2021
  */
 
 // How to compile and run:
@@ -45,17 +45,6 @@ int main(void)
   int loraHandle = loraInit("/dev/ttyAMA0", 115200);
   if (loraHandle < 0) return -1;
   addrToSend = 0;
-
-  // int networkID = loraGetNetworkID();
-  // int currentAddress = loraGetAddress();
-
-  // What I'm thinking for init, if you want to change it.
-
-  // Then we'll just need a couple of functions to update the value
-  // Something like, obviously change the function names to whatever you want:
-  // LCD_NETWORKID(loraGetNetworkID());
-  // LCD_LORA_ADDRESS(loraGetAddress());
-
   
   LCD_INIT();
 
@@ -193,25 +182,30 @@ std::string txtyCommand(std::string& command)
     // Set the address of this device.
     // Force compliance. Could check parameter, but this works.
     uint16_t addrParam = parameter & 0xFFFF;
-    if (loraSetAddress(addrParam) < 0)
-      return "ERROR: FAILED TO SET ADDRESS?";
-    else
-      return "Address set to: " + std::to_string(addrParam);
+    std::string addrMessage;
 
-    // TODO: Tell LCD that the address changed?
+    if (loraSetAddress(addrParam) < 0)
+      addrMessage = "ERROR: FAILED TO SET ADDRESS?";
+    else
+      addrMessage = "Address set to: " + std::to_string(addrParam);
+
+    LCD_LORA_ADDRESS(loraGetAddress());
+    return addrMessage;
   }
 
   else if(command.find("!id:") == 0)
   {
     // Set Network ID this device will use.
     // Force good range of values. Could check parameter instead.
-    int8_t idParam = parameter & 0x0F; 
+    int8_t idParam = parameter & 0x0F;
+    std::string idMessage;
     if (loraSetNetworkID(idParam) < 0)
-      return "ERROR: FAILED TO SET NETWORK ID?";  
+      idMessage = "ERROR: FAILED TO SET ID?";
     else
-      return "Network ID set to: " + std::to_string(idParam);
+      idMessage = "Network ID set to: " + std::to_string(idParam);
 
-    // TODO: Tell LCD that the id changed?
+    LCD_NETWORKID(loraGetNetworkID());
+    return idMessage;
   }
 
   else if(command.find("!dark") == 0)
@@ -227,22 +221,33 @@ std::string txtyCommand(std::string& command)
   }
 
 
-  // TODO: These commands
-  else if(command.find("!sendto:" == 0))
+  else if(command.find("!sendto:") == 0) // MAKE SURE PARENTHESIS ARE WHERE THEY SHOULD BE!
   {
     // Force compliance.
     addrToSend = parameter & 0xFFFF;
     return "Sending to:" + std::to_string(parameter & 0xFFFF) + ".";
-
   }
-/*
-  else if(command.find("!font:" == 0))
+
+  else if(command.find("!font:") == 0)
   {
     // make sure font is reasonable size
-    //LCD_set_font(size);
+
+    int goodFonts = [8,12,16,20,24];
+
+    for(int i = 0; i < 5; i++)
+    {
+      if(parameter == goodFonts[i])
+      {
+        LCD_set_font(parameter);
+        return "Setting font to " + std::to_string(parameter);
+      }     
+    }
+
+    return "Unable to set font size. Please use 8, 12, 16, 20, or 24.";
+
   }
-*/
-  else if(command.find("!range" == 0))
+
+  else if(command.find("!range") == 0)
   {
     int currentParam = loraGetRFParameter();
     if (currentParam < 0) return "ERROR: Using incorrect RF parameter?";

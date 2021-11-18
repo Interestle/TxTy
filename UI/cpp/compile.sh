@@ -22,4 +22,8 @@ sudo make clean
 echo "sudo make -j 4"
 sudo make -j 4
 
+if [ -e "./main" ]; then
+  echo "cp main ../../final/txty"
+  cp main ../../final/txty
+fi
 

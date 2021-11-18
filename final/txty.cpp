@@ -55,6 +55,11 @@ int main(void)
   pinMode(pageUpPin, INPUT);
   pinMode(pageDownPin, INPUT);
 
+  // Battery indicator is a single pin on the charger, if it is TODO,
+  // Tell the battery is low.
+  // int batteryPin = physPinToGpio(x);
+  // pinMode(batteryPin, INPUT);
+
   // Various values needed
   std::vector<std::string> savedMessages;
   std::vector<char> currentMessage;
@@ -135,6 +140,11 @@ int main(void)
 
     if(pageDown == 0x3F)
         LCD_down();
+
+    // Battery Indicator 
+    //if(!digitalRead(batteryPin))
+    //  LCD_battery(20);
+    //  Do a backup save?
 
     // Update LCD
 

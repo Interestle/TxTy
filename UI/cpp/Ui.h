@@ -37,8 +37,8 @@
 *		  to display the changes.
 *
 *----------------
-* |	This version:   V2.0
-* | Date        :   2021-11-17
+* |	This version:   V2.1
+* | Date        :   2021-11-18
 * | Info        :
 *
 ******************************************************************************/
@@ -708,8 +708,57 @@ void LCD_exit(void)
 {
 	/* Module Exit */
 	Paint_Clear(BLACK);
-	// /*3.Refresh the picture in RAM to LCD*/
+	Paint_DrawRectangle(10, 10, 310, 230, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(15, 15, 305, 225, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(25, 40, "Now shutting down ...", &Font16, BLACK, WHITE);
     	LCD_2IN_Display((UBYTE *)BlackImage);
+	DEV_Delay_ms(3000);
+
+	Paint_Clear(BLACK);
+	Paint_DrawRectangle(10, 10, 310, 230, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(15, 15, 305, 225, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(25, 40, "Now shutting down ...", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 70, "All settings and messages", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 90, "have been saved.", &Font16, BLACK, WHITE);
+	LCD_2IN_Display((UBYTE *)BlackImage);
+	DEV_Delay_ms(3000);
+
+	Paint_Clear(BLACK);
+	Paint_DrawRectangle(10, 10, 310, 230, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(15, 15, 305, 225, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(25, 40, "Now shutting down ...", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 70, "All settings and messages", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 90, "have been saved.", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 120, "Please flip switch to", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 140, "power off device.", &Font16, BLACK, WHITE);
+	LCD_2IN_Display((UBYTE *)BlackImage);
+	DEV_Delay_ms(3000);
+
+	Paint_Clear(BLACK);
+	Paint_DrawRectangle(10, 10, 310, 230, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(15, 15, 305, 225, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(25, 40, "Now shutting down ...", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 70, "All settings and messages", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 90, "have been saved.", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 120, "Please flip switch to", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 140, "power off device.", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 160, "and remember ...", &Font16, BLACK, WHITE);
+	LCD_2IN_Display((UBYTE *)BlackImage);
+	DEV_Delay_ms(3000);
+
+	Paint_Clear(BLACK);
+	Paint_DrawRectangle(10, 10, 310, 230, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(15, 15, 305, 225, GREEN, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(25, 40, "Now shutting down ...", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 70, "All settings and messages", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 90, "have been saved.", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 120, "Please flip switch to", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 140, "power off device.", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(25, 160, "and remember ...", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(70, 180, "F.L.A.M.I.N.G.O.s", &Font16, BLACK, WHITE);
+	Paint_DrawString_EN(80, 200, "never say die!", &Font16, BLACK, WHITE);
+    	LCD_2IN_Display((UBYTE *)BlackImage);
+
     	free(BlackImage);
     	BlackImage = NULL;
 	DEV_ModuleExit();

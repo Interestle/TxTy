@@ -71,7 +71,7 @@ int main(void)
 
   while (1)
   {
-    // Keyboard exlcusive characters
+    // Keyboard exclusive characters
     ch = getch();
     if(ch != -1)
     {
@@ -285,22 +285,25 @@ std::string txtyCommand(std::string& command)
 
     return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
-
-
+  
+  // TODO: else if(command.find("!save") == 0) {}
+  // TODO: else if(command.find("!load") == 0) {}
+  
+  // TODO: else if(command.find("!shutdown") == 0) {}
+  
+  // TODO: Implement a sleep function? I don't think it's worth it.
+  // TODO: Implement the AT+CPIN password of the network?
+  
+  
   // I just wanted a silly command that isn't documented.
   else if(command.find("!why") == 0)
   { // type 'why' into MATLAB.
     return txtyWhy();
   }
 
-  else if(command.find("!shutdown") == 0)
-  {
-    //TODO: implement
-  }
-  
   else if(command.find("!help") == 0)
   { // The LCD currently does NOT like newlines!
-    return "Avalable commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !clear, !help";
+    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !clear, !save, !load, !shutdown, !help";
   }
 
   return "invalid command: " + command;

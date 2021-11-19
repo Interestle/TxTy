@@ -51,6 +51,9 @@ int32_t loraGetNetworkID (void);
 int32_t loraSetRFParameter (uint16_t parameters);
 int32_t loraGetRFParameter (void);
 
+// Implement the AT+CPIN command? I don't really like it
+// int32_t loraSetNetworkPassword (std::string password);
+
 int32_t loraSleep (int8_t mode);
 int32_t loraWaitForData (std::string& s, uint32_t maxWaitTime = 1000000);
 
@@ -397,6 +400,50 @@ int32_t loraGetRFParameter (void)
   return loraRFParameter;
 }
 
+/*
+ * Here is just a little prototype of a function to set the password. It 
+ * currently isn't implemented, and don't expect it to be right now. I don't
+ * really know how it works on the RYLR896, and I don't feel like learning it.
+ * The command is 'AT+CPIN=<Password>', where <Password> is a 32 character
+ * long password from 000...001 to FFF...FFF. Only by using the same password
+ * can devices communicate. "After resetting, the previously password will 
+ * disappear." Whatever that means. Software reset? Hardware reset? Reset CMD?
+ * Does that mean to set the password to no password, set password = 0?
+ * I don't know. It's not documented well, and hard to understand.
+ * Maybe something to test out later.
+ * /
+int32_t loraSetNetworkPassword (std::string password)
+{
+  int maxLength = 16;
+  if (password.length() > maxLength) return -1;
+ 
+  // Create a full password 
+  // WARNING: NOT HOW YOU SHOULD EVER CREATE PROPER PASSWORDS!
+  char cPassword[maxLength];
+  for (int i = 0; i < maxLength; i++)
+	truePassword[i] = ((maxLength - i) > password.length()) ? '0' : password[(maxLength - (i + password.length()-1))]; 	  
+
+  // Now just get the hex values of that string.
+  char const hex_chars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+  
+  std::string sPassword = "";
+  for (int i = 0; i < maxLength; i++)
+  {
+    sPassword += hex_chars[(cPassword & 0xF0) >> 4 ];
+	sPassword += hex_chars[(cPassword & 0x0F)];
+  }
+  
+  // Should now have a 32 character long string of hex values,
+  // now we just need to send it to the module.
+  
+  std::string toSend = "AT+CPIN=" + sPassword + "\r\n";
+  
+  // Send to Lora
+  // Wait for response back.
+  return 0; 
+}
+
+*/ // loraSetNetworkPassword (fix function header comment)
 
 /*
  * This function tells the RYLR896 to go into sleep mode or awaken from

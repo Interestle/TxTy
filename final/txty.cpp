@@ -107,8 +107,8 @@ int main(void)
             stringToSend = "U1: " + stringToSend;
             savedMessages.push_back(stringToSend);
 
-            // Append message to history file.
-            // TODO
+            // TODO: Append message to history file.
+			// Alternatively, only save upon !save ?
           }
           
           currentMessage.clear();

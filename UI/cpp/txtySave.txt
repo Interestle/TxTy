@@ -1,0 +1,20 @@
+10
+10
+50199
+12
+16
+1
+Address set to: 10
+Network ID set to: 11
+U1: :range
+Now in long range. Make sure others are in the same range mode!
+Sending to:12.
+Setting font to 16
+Going into light mode!
+Going into dark mode!
+Going into light mode!
+Going into light mode!
+Going into dark mode!
+Going into dark mode!
+Going into light mode!
+Network ID set to: 10

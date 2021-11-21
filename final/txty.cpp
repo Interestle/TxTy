@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 18, 2021
+ * Last updated: November 21, 2021
  */
 
 // How to compile and run:
@@ -18,24 +18,11 @@
 #include "Ui.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <exception>
 #include <ncurses.h>
-
-/* Functions */
-std::string txtyCommand(std::string& command);
-
-//void saveToFile (deviceSettings settings, std::vector<std::string> messagesToSave);
-//deviceSettings settingsToUse loadFromFile (std::vector<std::string>& messagesToLoad);
-std::string txtyWhy(void);
-void txtyExit(int exitCode);
-
-/* Nasty global variable */
-uint16_t addrToSend;
-int displayMode;
-int currentFont;
-
 
 struct deviceSettings
 {
@@ -46,6 +33,18 @@ struct deviceSettings
   int font;
   int displayMode;
 };
+
+deviceSettings currentSettings;
+
+/* Functions */
+std::string txtyCommand(std::string& command);
+
+void saveToFile (std::vector<std::string> messagesToSave);
+deviceSettings loadFromFile (std::vector<std::string>& messagesToLoad);
+
+std::string txtyWhy(void);
+void txtyExit(int exitCode);
+
 
 int main(void)
 {
@@ -59,7 +58,6 @@ int main(void)
   // Initialize LoRa and LCD
   int loraHandle = loraInit("/dev/ttyAMA0", 115200);
   if (loraHandle < 0) return -1;
-  addrToSend = 0;
   
   LCD_INIT();
 
@@ -95,6 +93,14 @@ int main(void)
   // displayMode = savedSettings.displayMode;
   // displayMode ? LCD_light_mode() : LCD_dark_mode();
 
+  uint32_t startSaveTick, endSaveTick; //, startInactiveTick, endInactiveTick;
+  startSaveTick = gpioTick();
+  //startInactiveTick = gpioTick();
+
+  //int isInactive = 0;
+
+  const uint32_t fiveMinutes = 1000000 * 60 * 5;
+  //const uint32_t thirtySeconds = 1000000 * 5;
 
   while (1)
   {
@@ -102,6 +108,7 @@ int main(void)
     ch = getch();
     if(ch != -1)
     {
+  //    isInactive = 0;
       if(ch == 27) // Esc
       {
         txtyExit(0);
@@ -125,19 +132,27 @@ int main(void)
           {
             // No good way to clear out the screen in function, just do here.
             if(stringToSend == "!clear") savedMessages.clear();
+            else if(stringToSend == "!save") saveToFile(savedMessages);
+            else if(stringToSend == "!load") 
+            {
+              deviceSettings test = loadFromFile(savedMessages);
+
+              std::cout << "addr: " << test.thisAddress << std::endl;
+              std::cout << "id: " << test.thisNetworkID << std::endl;
+              std::cout << "rf: " << test.thisRFParameter << std::endl;
+              std::cout << "send: " << test.sendAddress << std::endl;
+              std::cout << "font: " << test.font << std::endl;
+              std::cout << "disp: " << test.displayMode << std::endl;              
+            } 
             else savedMessages.push_back(txtyCommand(stringToSend));
           }
           else
           {
-            loraSend(addrToSend, stringToSend);
+            loraSend(currentSettings.sendAddress, stringToSend);
           
             stringToSend = "U1: " + stringToSend;
             savedMessages.push_back(stringToSend);
-
-            // TODO: Append message to history file.
-			// Alternatively, only save upon !save ?
           }
-          
           currentMessage.clear();
           LCD_message_box("");
 
@@ -160,23 +175,53 @@ int main(void)
        updateScreen = true;
     }
     
-
-
     // Additional buttons 
     pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
 
     if(pageUp == 0x3F)
-        LCD_up();
+    {
+      LCD_up();
+//      isInactive = 0;
+    }
 
     if(pageDown == 0x3F)
-        LCD_down();
+    {
+      LCD_down();
+//      isInactive = 0;
+    }
 
     // Battery Indicator 
     //if(!digitalRead(batteryPin))
     //  LCD_battery(20);
     //  save();
 
+    // Save messages every 5 minutes
+    endSaveTick = gpioTick();
+    if(endSaveTick - startSaveTick >= fiveMinutes)
+    {
+      startSaveTick = endSaveTick;
+      saveToFile(savedMessages);
+    }
+
+/* TODO: FIX
+    // Turn display off every 30 seconds of inactivity
+    endInactiveTick = gpioTick();
+    if(endInactiveTick - startInactiveTick >= thirtySeconds)
+    {
+      isInactive = 1;
+      pwmWrite(LCD_BL, 0);
+    }
+
+    if(!isInactive)
+    {
+      std::cout << "Out of sleep mode!" << std::endl;
+      pwmWrite(LCD_BL, 512);
+      startInactiveTick = gpioTick();
+      isInactive = 1;
+    }
+
+*/
     // Update LCD
 
     if(updateScreen)
@@ -230,6 +275,7 @@ std::string txtyCommand(std::string& command)
     else
       addrMessage = "Address set to: " + std::to_string(addrParam);
 
+    currentSettings.thisAddress = loraGetAddress();
     LCD_LORA_ADDRESS(loraGetAddress());
     return addrMessage;
   }
@@ -245,6 +291,7 @@ std::string txtyCommand(std::string& command)
     else
       idMessage = "Network ID set to: " + std::to_string(idParam);
 
+    currentSettings.thisNetworkID = loraGetNetworkID();
     LCD_NETWORKID(loraGetNetworkID());
     return idMessage;
   }
@@ -252,21 +299,21 @@ std::string txtyCommand(std::string& command)
   else if(command.find("!dark") == 0)
   {
     LCD_dark_mode();
-    screenMode = 0;
+    currentSettings.displayMode = 0;
     return "Going into dark mode!";
   }
 
   else if(command.find("!light") == 0)
   {
     LCD_light_mode();
-    screenMode = 1;
+    currentSettings.displayMode = 1;
     return "Going into light mode!";
   }
 
   else if(command.find("!sendto:") == 0) // MAKE SURE PARENTHESIS ARE WHERE THEY SHOULD BE!
   {
     // Force compliance.
-    addrToSend = parameter & 0xFFFF;
+    currentSettings.sendAddress = parameter & 0xFFFF;
     return "Sending to:" + std::to_string(parameter & 0xFFFF) + ".";
   }
 
@@ -281,6 +328,7 @@ std::string txtyCommand(std::string& command)
       if(parameter == goodFonts[i])
       {
         LCD_set_font(parameter);
+        currentSettings.font = parameter;
         return "Setting font to " + std::to_string(parameter);
       }     
     }
@@ -311,10 +359,10 @@ std::string txtyCommand(std::string& command)
     int temp = loraSetRFParameter(nNextRange);
     if (temp < 0) return "ERROR: RF FAILED to set. Code: " + std::to_string(temp) + ".";
 
+    currentSettings.thisRFParameter = loraGetRFParameter();
     return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
   
-  // TODO: else if(command.find("!save") == 0) {}
   // TODO: else if(command.find("!load") == 0) {}
   
   // TODO: else if(command.find("!shutdown") == 0) {}
@@ -337,17 +385,59 @@ std::string txtyCommand(std::string& command)
   return "invalid command: " + command;
 }
 
-
-void saveToFile (deviceSettings settings, std::vector<std::string> messagesToSave)
+/*
+ *
+ */
+void saveToFile (std::vector<std::string> messagesToSave)
 {
   std::ofstream txtySave ("txtySave.txt");
   if(txtySave.is_open())
   {
-    
+    txtySave << currentSettings.thisAddress << "\n";
+    txtySave << currentSettings.thisNetworkID << "\n";
+    txtySave << currentSettings.thisRFParameter << "\n";
+    txtySave << currentSettings.sendAddress << "\n";
+    txtySave << currentSettings.font << "\n";
+    txtySave << currentSettings.displayMode << "\n";
 
-  {
+    for(size_t i = 0; i < messagesToSave.size(); i++)
+    {
+      txtySave << messagesToSave[i] << "\n";
+    }
+  }
+  txtySave.close();
 }
-//deviceSettings settingsToUse loadFromFile (std::vector<std::string>& messagesToLoad);
+
+/*
+ *
+ *
+ */
+deviceSettings loadFromFile (std::vector<std::string>& messagesToLoad)
+{
+  std::vector<std::string> readData;
+  deviceSettings settings;
+
+  std::ifstream txtyRead ("txtySave.txt");
+  if(txtyRead.is_open())
+  {
+    txtyRead >> settings.thisAddress;
+    txtyRead >> settings.thisNetworkID;
+    txtyRead >> settings.thisRFParameter;
+    txtyRead >> settings.sendAddress;
+    txtyRead >> settings.font;
+    txtyRead >> settings.displayMode;
+    
+    std::string savedString;
+    while(getline(txtyRead,savedString))
+    {
+      readData.push_back(savedString);
+    }
+  }
+  txtyRead.close();
+
+  messagesToLoad = readData;
+  return settings;
+}
 
 
 

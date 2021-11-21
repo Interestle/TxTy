@@ -232,7 +232,7 @@ std::string txtyCommand(std::string& command)
   {
     // make sure font is reasonable size
 
-    int goodFonts = [8,12,16,20,24];
+    int goodFonts[] = {8,12,16,20,24};
 
     for(int i = 0; i < 5; i++)
     {

@@ -55,6 +55,12 @@ int main(void)
   pinMode(pageUpPin, INPUT);
   pinMode(pageDownPin, INPUT);
 
+  // Battery indicator is a single pin on the charger, if it is 0,
+  // it's gonna die soon (~3.2 V)
+  // Tell the battery is low.
+  // int batteryPin = physPinToGpio(TODO:FINDPIN);
+  // pinMode(batteryPin, INPUT);
+
   // Various values needed
   std::vector<std::string> savedMessages;
   std::vector<char> currentMessage;
@@ -65,7 +71,7 @@ int main(void)
 
   while (1)
   {
-    // Keyboard exlcusive characters
+    // Keyboard exclusive characters
     ch = getch();
     if(ch != -1)
     {
@@ -100,6 +106,9 @@ int main(void)
           
             stringToSend = "U1: " + stringToSend;
             savedMessages.push_back(stringToSend);
+
+            // TODO: Append message to history file.
+			// Alternatively, only save upon !save ?
           }
           
           currentMessage.clear();
@@ -135,6 +144,11 @@ int main(void)
 
     if(pageDown == 0x3F)
         LCD_down();
+
+    // Battery Indicator 
+    //if(!digitalRead(batteryPin))
+    //  LCD_battery(20);
+    //  Do a backup save?
 
     // Update LCD
 
@@ -271,17 +285,25 @@ std::string txtyCommand(std::string& command)
 
     return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
-
-
+  
+  // TODO: else if(command.find("!save") == 0) {}
+  // TODO: else if(command.find("!load") == 0) {}
+  
+  // TODO: else if(command.find("!shutdown") == 0) {}
+  
+  // TODO: Implement a sleep function? I don't think it's worth it.
+  // TODO: Implement the AT+CPIN password of the network?
+  
+  
   // I just wanted a silly command that isn't documented.
   else if(command.find("!why") == 0)
   { // type 'why' into MATLAB.
     return txtyWhy();
   }
-  
+
   else if(command.find("!help") == 0)
   { // The LCD currently does NOT like newlines!
-    return "Avalable commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !clear, !help";
+    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !clear, !save, !load, !shutdown, !help";
   }
 
   return "invalid command: " + command;

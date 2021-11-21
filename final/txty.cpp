@@ -25,12 +25,27 @@
 
 /* Functions */
 std::string txtyCommand(std::string& command);
+
+//void saveToFile (deviceSettings settings, std::vector<std::string> messagesToSave);
+//deviceSettings settingsToUse loadFromFile (std::vector<std::string>& messagesToLoad);
 std::string txtyWhy(void);
 void txtyExit(int exitCode);
 
 /* Nasty global variable */
 uint16_t addrToSend;
+int displayMode;
+int currentFont;
 
+
+struct deviceSettings
+{
+  int thisAddress;
+  int thisNetworkID;
+  int thisRFParameter;
+  int sendAddress;
+  int font;
+  int displayMode;
+};
 
 int main(void)
 {
@@ -68,6 +83,18 @@ int main(void)
 
   bool updateScreen;
   loraMessage fromLora;
+
+  // Load data from text file.
+  // deviceSettings savedSettings = load(savedMessages);
+  // loraSetAddress(savedSettings.thisAddress);
+  // loraSetNetworkID(savedSettings.thisNetworkID);
+  // loraSetRFParameter(savedSettings.thisRFParameter);
+  // addrToSend = savedSettings.sendAddress);
+  // currentFont = savedSettings.font;
+  // LCD_set_font(currentFont);
+  // displayMode = savedSettings.displayMode;
+  // displayMode ? LCD_light_mode() : LCD_dark_mode();
+
 
   while (1)
   {
@@ -148,7 +175,7 @@ int main(void)
     // Battery Indicator 
     //if(!digitalRead(batteryPin))
     //  LCD_battery(20);
-    //  Do a backup save?
+    //  save();
 
     // Update LCD
 
@@ -225,15 +252,16 @@ std::string txtyCommand(std::string& command)
   else if(command.find("!dark") == 0)
   {
     LCD_dark_mode();
+    screenMode = 0;
     return "Going into dark mode!";
   }
 
   else if(command.find("!light") == 0)
   {
     LCD_light_mode();
+    screenMode = 1;
     return "Going into light mode!";
   }
-
 
   else if(command.find("!sendto:") == 0) // MAKE SURE PARENTHESIS ARE WHERE THEY SHOULD BE!
   {
@@ -308,6 +336,20 @@ std::string txtyCommand(std::string& command)
 
   return "invalid command: " + command;
 }
+
+
+void saveToFile (deviceSettings settings, std::vector<std::string> messagesToSave)
+{
+  std::ofstream txtySave ("txtySave.txt");
+  if(txtySave.is_open())
+  {
+    
+
+  {
+}
+//deviceSettings settingsToUse loadFromFile (std::vector<std::string>& messagesToLoad);
+
+
 
 /*
  * I called the why command in MATLAB a few times. Here are a few of my

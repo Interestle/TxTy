@@ -25,6 +25,7 @@ struct deviceSettings
   int sendAddress;
   int font;
   int displayMode;
+  int displayBrightness;
 } currentSettings;
 
 
@@ -74,26 +75,27 @@ int main(void)
   bool updateScreen;
   loraMessage fromLora;
 
+  bool buttonPushed = false;
+  bool isScreenOn = true;
+
   // Load data from text file.
   loadFromFile(savedMessages);
 
   // Various timers.
-  uint32_t startSaveTick, endSaveTick; //, startInactiveTick, endInactiveTick;
+  uint32_t startSaveTick, endSaveTick; 
+  uint32_t startTimeoutTick, endTimeoutTick;
   startSaveTick = gpioTick();
-  //startInactiveTick = gpioTick();
+  startTimeoutTick = startSaveTick;
 
-  //int isInactive = 0;
-
-  const uint32_t fiveMinutes = 1000000 * 60 * 5;
-  //const uint32_t thirtySeconds = 1000000 * 5;
-
+  const int32_t fiveMinutes  = 1000000 * 60 * 5;
+  const int32_t timeoutTimer = 1000000 * 30; // 30 seconds
   while (1)
   {
     // Keyboard exclusive characters
     ch = getch();
     if(ch != -1)
     {
-  //    isInactive = 0;
+      buttonPushed = true;
       if(ch == 27) // Esc
       {
         txtyExit(0);
@@ -165,13 +167,13 @@ int main(void)
     if(pageUp == 0x3F)
     {
       LCD_up();
-//      isInactive = 0;
+      buttonPushed = true;
     }
 
     if(pageDown == 0x3F)
     {
       LCD_down();
-//      isInactive = 0;
+      buttonPushed = true;
     }
 
     // Battery Indicator 
@@ -187,26 +189,30 @@ int main(void)
       saveToFile(savedMessages);
     }
 
-/* TODO: FIX
-    // Turn display off every 30 seconds of inactivity
-    endInactiveTick = gpioTick();
-    if(endInactiveTick - startInactiveTick >= thirtySeconds)
+    // Turn off display after so much time of inactivity.
+    endTimeoutTick = gpioTick();
+    if(isScreenOn && ((endTimeoutTick - startTimeoutTick) >= timeoutTimer))
     {
-      isInactive = 1;
       pwmWrite(LCD_BL, 0);
+      isScreenOn = false;
     }
 
-    if(!isInactive)
+    // Action performed, reset timer
+    if(buttonPushed)
     {
-      std::cout << "Out of sleep mode!" << std::endl;
-      pwmWrite(LCD_BL, 512);
-      startInactiveTick = gpioTick();
-      isInactive = 1;
+      startTimeoutTick = gpioTick();
+ 
+      // If the screen is currently off, turn it on.
+      if(!isScreenOn)
+      {
+        pwmWrite(LCD_BL, currentSettings.displayBrightness);
+        isScreenOn = true;
+      }
+      buttonPushed = false;
     }
 
-*/
-    // Update LCD
 
+    // Update LCD
     if(updateScreen)
     {
       updateScreen = false;
@@ -352,7 +358,20 @@ std::string txtyCommand(std::string& command)
     currentSettings.thisRFParameter = loraGetRFParameter();
     return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
+ 
+  else if(command.find("!bright:") == 0)
+  {
+    if (parameter % 5)
+      return "Brightness % must be a multiple of five!";
 
+    if ((parameter > 100) || (parameter < 5))  
+      return "Brightness must be between 5 and 100!";
+
+    currentSettings.displayBrightness = (512 * parameter) / 100;
+    pwmWrite(LCD_BL, currentSettings.displayBrightness);
+
+    return "Display brightness is now at: " + std::to_string(parameter) + "%";
+  }
   
   // TODO: Implement a sleep function? I don't think it's worth it.
   // TODO: Implement the AT+CPIN password of the network?
@@ -366,7 +385,7 @@ std::string txtyCommand(std::string& command)
 
   else if(command.find("!help") == 0)
   { // The LCD currently does NOT like newlines!
-    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !clear, !save, !load, !shutdown, !help";
+    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !bright:#, !clear, !save, !load, !shutdown, !help";
   }
 
   return "invalid command: " + command;
@@ -386,7 +405,8 @@ void saveToFile (std::vector<std::string>& messagesToSave)
     txtySave << currentSettings.thisRFParameter << " ";
     txtySave << currentSettings.sendAddress << " ";
     txtySave << currentSettings.font << " ";
-    txtySave << currentSettings.displayMode << std::endl;
+    txtySave << currentSettings.displayMode << " ";
+    txtySave << currentSettings.displayBrightness << std::endl;
 
     for(size_t i = 0; i < messagesToSave.size(); i++)
     { // Only save messages that are actually messages.
@@ -415,6 +435,7 @@ void loadFromFile (std::vector<std::string>& messagesToLoad)
     txtyRead >> currentSettings.sendAddress;
     txtyRead >> currentSettings.font;
     txtyRead >> currentSettings.displayMode;
+    txtyRead >> currentSettings.displayBrightness;
     
     std::string savedString;
     while(std::getline(txtyRead, savedString))
@@ -437,6 +458,7 @@ void loadFromFile (std::vector<std::string>& messagesToLoad)
   
   LCD_set_font(currentSettings.font);
   currentSettings.displayMode ? LCD_light_mode() : LCD_dark_mode();
+  pwmWrite(LCD_BL, currentSettings.displayBrightness);
 
   messagesToLoad = readData;
   LCD_messages(messagesToLoad);

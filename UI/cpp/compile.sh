@@ -20,7 +20,7 @@ if [ -e "$saveBackup" ]; then
 else
   # No save file. Make one with defaults
   touch txtySave.txt
-  echo "0 0 42775 0 16 1" > txtySave.txt
+  echo "0 0 42775 0 16 1 100" > txtySave.txt
 fi
 
 # Move current working cpp to here.

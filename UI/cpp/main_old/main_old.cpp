@@ -88,8 +88,7 @@ int main(void)
   startTimeoutTick = startSaveTick;
 
   const int32_t fiveMinutes  = 1000000 * 60 * 5;
-  const int32_t timeoutTimer = 1000000 * 5; // 5 seconds
- int brightness = 1;
+  const int32_t timeoutTimer = 1000000 * 30; // 30 seconds
   while (1)
   {
     // Keyboard exclusive characters
@@ -206,7 +205,7 @@ int main(void)
       // If the screen is currently off, turn it on.
       if(!isScreenOn)
       {
-        pwmWrite(LCD_BL, 512);
+        pwmWrite(LCD_BL, currentSettings.displayBrightness);
         isScreenOn = true;
       }
       buttonPushed = false;
@@ -370,6 +369,8 @@ std::string txtyCommand(std::string& command)
 
     currentSettings.displayBrightness = (512 * parameter) / 100;
     pwmWrite(LCD_BL, currentSettings.displayBrightness);
+
+    return "Display brightness is now at: " + std::to_string(parameter) + "%";
   }
   
   // TODO: Implement a sleep function? I don't think it's worth it.

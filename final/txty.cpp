@@ -501,7 +501,8 @@ std::string txtyWhy(void)
  * Bail function. Call this upon exit.
  */
 void txtyExit(int exitCode)
-{
+{ 
+  pwmWrite(LCD_BL, currentSettings.displayBrightness);
   endwin();
   loraClose();
   gpioTerminate();

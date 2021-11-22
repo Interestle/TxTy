@@ -301,7 +301,7 @@ std::string txtyCommand(std::string& command)
     return "Going into light mode!";
   }
 
-  else if(command.find("!sendto:") == 0) // MAKE SURE PARENTHESIS ARE WHERE THEY SHOULD BE!
+  else if(command.find("!sendto:") == 0)
   {
     // Force compliance.
     currentSettings.sendAddress = parameter & 0x0FFFF;
@@ -501,7 +501,8 @@ std::string txtyWhy(void)
  * Bail function. Call this upon exit.
  */
 void txtyExit(int exitCode)
-{
+{ 
+  pwmWrite(LCD_BL, currentSettings.displayBrightness);
   endwin();
   loraClose();
   gpioTerminate();

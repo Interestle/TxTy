@@ -2,6 +2,7 @@
 
 mainExe=./main
 mainCpp=./main.cpp
+saveBackup=./txtySave.txt
 
 if [ -e "$mainExe" ]; then
   echo "cp main main_old/main_old"
@@ -13,6 +14,12 @@ if [ -e "$mainCpp" ]; then
   cp main.cpp main_old/main_old.cpp
 fi
 
+if [ -e "$saveBackup" ]; then
+  echo "cp txtySave.txt main_old/txtySave.txt"
+  cp txtySave.txt main_old/txtySave.txt
+fi
+
+# Move current working cpp to here.
 echo "cp ../../final/txty.cpp main.cpp"
 cp ../../final/txty.cpp main.cpp
 
@@ -22,6 +29,7 @@ sudo make clean
 echo "sudo make -j 4"
 sudo make -j 4
 
+# If successful, the new main file was created, move to final location.
 if [ -e "./main" ]; then
   echo "cp main ../../final/txty"
   cp main ../../final/txty

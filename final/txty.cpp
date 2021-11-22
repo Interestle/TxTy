@@ -6,13 +6,6 @@
  * Last updated: November 21, 2021
  */
 
-// How to compile and run:
-// cd TxTy/TxTy/UI/cpp
-// cp ../../final/txty.cpp main.cpp
-// sudo make clean
-// sudo make -j 4
-// sudo ./main
-
 
 #include "/home/pi/TxTy/TxTy/LoRa/lora.h"
 #include "Ui.h"
@@ -32,15 +25,14 @@ struct deviceSettings
   int sendAddress;
   int font;
   int displayMode;
-};
+} currentSettings;
 
-deviceSettings currentSettings;
 
 /* Functions */
 std::string txtyCommand(std::string& command);
 
-void saveToFile (std::vector<std::string> messagesToSave);
-deviceSettings loadFromFile (std::vector<std::string>& messagesToLoad);
+void saveToFile (std::vector<std::string>& messagesToSave);
+void loadFromFile (std::vector<std::string>& messagesToLoad);
 
 std::string txtyWhy(void);
 void txtyExit(int exitCode);
@@ -83,16 +75,9 @@ int main(void)
   loraMessage fromLora;
 
   // Load data from text file.
-  // deviceSettings savedSettings = load(savedMessages);
-  // loraSetAddress(savedSettings.thisAddress);
-  // loraSetNetworkID(savedSettings.thisNetworkID);
-  // loraSetRFParameter(savedSettings.thisRFParameter);
-  // addrToSend = savedSettings.sendAddress);
-  // currentFont = savedSettings.font;
-  // LCD_set_font(currentFont);
-  // displayMode = savedSettings.displayMode;
-  // displayMode ? LCD_light_mode() : LCD_dark_mode();
+  loadFromFile(savedMessages);
 
+  // Various timers.
   uint32_t startSaveTick, endSaveTick; //, startInactiveTick, endInactiveTick;
   startSaveTick = gpioTick();
   //startInactiveTick = gpioTick();
@@ -128,29 +113,26 @@ int main(void)
         {
           std::string stringToSend(currentMessage.begin(), currentMessage.end());
 
+          // If the message is a command, do that instead of sending it.
           if ((stringToSend[0] == '!') && (stringToSend.length() > 1))
           {
-            // No good way to clear out the screen in function, just do here.
+            // Commands that need to modify savedMessages.
             if(stringToSend == "!clear") savedMessages.clear();
             else if(stringToSend == "!save") saveToFile(savedMessages);
-            else if(stringToSend == "!load") 
-            {
-              deviceSettings test = loadFromFile(savedMessages);
-
-              std::cout << "addr: " << test.thisAddress << std::endl;
-              std::cout << "id: " << test.thisNetworkID << std::endl;
-              std::cout << "rf: " << test.thisRFParameter << std::endl;
-              std::cout << "send: " << test.sendAddress << std::endl;
-              std::cout << "font: " << test.font << std::endl;
-              std::cout << "disp: " << test.displayMode << std::endl;              
-            } 
+            else if(stringToSend == "!load") loadFromFile(savedMessages);
+            else if(stringToSend == "!shutdown")
+            { 
+              saveToFile(savedMessages);
+              txtyExit(0);
+            }
+            // Every other command.
             else savedMessages.push_back(txtyCommand(stringToSend));
           }
           else
           {
             loraSend(currentSettings.sendAddress, stringToSend);
           
-            stringToSend = "U1: " + stringToSend;
+            stringToSend = "U" + std::to_string(currentSettings.thisAddress) + ": " + stringToSend;
             savedMessages.push_back(stringToSend);
           }
           currentMessage.clear();
@@ -171,8 +153,9 @@ int main(void)
     // LoRa messages
     if(loraReceive(fromLora) > 0)
     {
-       savedMessages.push_back("U2: " + fromLora.message);
+       savedMessages.push_back("U" + std::to_string(fromLora.address) + ": " + fromLora.message);
        updateScreen = true;
+       //TODO: check RSSI/SNR, suggest user switch range if poor or weak?
     }
     
     // Additional buttons 
@@ -194,7 +177,7 @@ int main(void)
     // Battery Indicator 
     //if(!digitalRead(batteryPin))
     //  LCD_battery(20);
-    //  save();
+    //  saveToFile(savedMessages);
 
     // Save messages every 5 minutes
     endSaveTick = gpioTick();
@@ -230,6 +213,8 @@ int main(void)
       LCD_messages(savedMessages);
     }    
   }
+
+  // End of loop. Shouldn't get here.
   return 0;
 }
 
@@ -273,7 +258,7 @@ std::string txtyCommand(std::string& command)
     if (loraSetAddress(addrParam) < 0)
       addrMessage = "ERROR: FAILED TO SET ADDRESS?";
     else
-      addrMessage = "Address set to: " + std::to_string(addrParam);
+      addrMessage = "This address is now: " + std::to_string(addrParam);
 
     currentSettings.thisAddress = loraGetAddress();
     LCD_LORA_ADDRESS(loraGetAddress());
@@ -289,7 +274,7 @@ std::string txtyCommand(std::string& command)
     if (loraSetNetworkID(idParam) < 0)
       idMessage = "ERROR: FAILED TO SET ID?";
     else
-      idMessage = "Network ID set to: " + std::to_string(idParam);
+      idMessage = "This network ID is: " + std::to_string(idParam);
 
     currentSettings.thisNetworkID = loraGetNetworkID();
     LCD_NETWORKID(loraGetNetworkID());
@@ -313,8 +298,14 @@ std::string txtyCommand(std::string& command)
   else if(command.find("!sendto:") == 0) // MAKE SURE PARENTHESIS ARE WHERE THEY SHOULD BE!
   {
     // Force compliance.
-    currentSettings.sendAddress = parameter & 0xFFFF;
-    return "Sending to:" + std::to_string(parameter & 0xFFFF) + ".";
+    currentSettings.sendAddress = parameter & 0x0FFFF;
+    
+    std::string val;
+    if(currentSettings.sendAddress)
+      val = "Sending to: " + std::to_string(currentSettings.sendAddress);
+    else
+      val = "Sending to everyone!";
+    return val;
   }
 
   else if(command.find("!font:") == 0)
@@ -334,7 +325,6 @@ std::string txtyCommand(std::string& command)
     }
 
     return "Unable to set font size. Please use 8, 12, 16, 20, or 24.";
-
   }
 
   else if(command.find("!range") == 0)
@@ -362,10 +352,7 @@ std::string txtyCommand(std::string& command)
     currentSettings.thisRFParameter = loraGetRFParameter();
     return "Now in " + sNextRange + " range. Make sure others are in the same range mode!";
   }
-  
-  // TODO: else if(command.find("!load") == 0) {}
-  
-  // TODO: else if(command.find("!shutdown") == 0) {}
+
   
   // TODO: Implement a sleep function? I don't think it's worth it.
   // TODO: Implement the AT+CPIN password of the network?
@@ -386,57 +373,73 @@ std::string txtyCommand(std::string& command)
 }
 
 /*
- *
+ * This function saves the currently used settings of the application,
+ * as well as the list of sent and received messages to txtySave.txt.
  */
-void saveToFile (std::vector<std::string> messagesToSave)
+void saveToFile (std::vector<std::string>& messagesToSave)
 {
   std::ofstream txtySave ("txtySave.txt");
   if(txtySave.is_open())
   {
-    txtySave << currentSettings.thisAddress << "\n";
-    txtySave << currentSettings.thisNetworkID << "\n";
-    txtySave << currentSettings.thisRFParameter << "\n";
-    txtySave << currentSettings.sendAddress << "\n";
-    txtySave << currentSettings.font << "\n";
-    txtySave << currentSettings.displayMode << "\n";
+    txtySave << currentSettings.thisAddress << " ";
+    txtySave << currentSettings.thisNetworkID << " ";
+    txtySave << currentSettings.thisRFParameter << " ";
+    txtySave << currentSettings.sendAddress << " ";
+    txtySave << currentSettings.font << " ";
+    txtySave << currentSettings.displayMode << std::endl;
 
     for(size_t i = 0; i < messagesToSave.size(); i++)
-    {
-      txtySave << messagesToSave[i] << "\n";
+    { // Only save messages that are actually messages.
+      if(messagesToSave[i][0] == 'U')
+        txtySave << messagesToSave[i] << std::endl;
     }
   }
   txtySave.close();
 }
 
+
 /*
- *
- *
+ * This function loads settings for the application to use as well as the saved
+ * list of sent and received messages.
  */
-deviceSettings loadFromFile (std::vector<std::string>& messagesToLoad)
+void loadFromFile (std::vector<std::string>& messagesToLoad)
 {
   std::vector<std::string> readData;
-  deviceSettings settings;
 
   std::ifstream txtyRead ("txtySave.txt");
   if(txtyRead.is_open())
   {
-    txtyRead >> settings.thisAddress;
-    txtyRead >> settings.thisNetworkID;
-    txtyRead >> settings.thisRFParameter;
-    txtyRead >> settings.sendAddress;
-    txtyRead >> settings.font;
-    txtyRead >> settings.displayMode;
+    txtyRead >> currentSettings.thisAddress;
+    txtyRead >> currentSettings.thisNetworkID;
+    txtyRead >> currentSettings.thisRFParameter;
+    txtyRead >> currentSettings.sendAddress;
+    txtyRead >> currentSettings.font;
+    txtyRead >> currentSettings.displayMode;
     
     std::string savedString;
-    while(getline(txtyRead,savedString))
+    while(std::getline(txtyRead, savedString))
     {
       readData.push_back(savedString);
     }
   }
   txtyRead.close();
 
+  // Now that everything is read, let's update LoRa and LCD.
+  int temp = loraSetAddress(currentSettings.thisAddress);
+  if (temp < 0) txtyExit(temp);
+  temp = loraSetNetworkID(currentSettings.thisNetworkID);
+  if (temp < 0) txtyExit(temp);
+  temp = loraSetRFParameter(currentSettings.thisRFParameter);
+  if (temp < 0) txtyExit(temp);
+
+  LCD_LORA_ADDRESS(loraGetAddress());
+  LCD_NETWORKID(loraGetNetworkID());
+  
+  LCD_set_font(currentSettings.font);
+  currentSettings.displayMode ? LCD_light_mode() : LCD_dark_mode();
+
   messagesToLoad = readData;
-  return settings;
+  LCD_messages(messagesToLoad);
 }
 
 
@@ -474,7 +477,6 @@ std::string txtyWhy(void)
 
 /*
  * Bail function. Call this upon exit.
- *
  */
 void txtyExit(int exitCode)
 {

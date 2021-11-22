@@ -4,7 +4,7 @@ SAVEFILE=./txtySave.txt
 
 if [ ! -e "$SAVEFILE" ]; then
   touch txtySave.txt
-  echo "0 0 42775 0 16 1 100" > txtySave.txt
+  echo "0 0 42775 0 16 1 512" > txtySave.txt
 fi
 
 sudo ./txty

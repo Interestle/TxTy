@@ -1,0 +1,22 @@
+# Here is a service to use TxTy. To use, run the following commands:
+# sudo cp txty.service.txt /etc/systemd/system/txty.service
+# sudo systemctl enable txty.service
+# sudo reboot
+
+[Unit]
+Description=TxTy service
+After=network.target
+
+[Service]
+Type=simple
+TTYPath=/dev/tty13
+ExecStartPre=/usr/bin/chvt 13
+ExecStart=/home/pi/TxTy/final/txty.sh
+WorkingDirectory=/home/pi/final/
+TimeoutStartSec=0
+StandardInput=tty
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=default.target

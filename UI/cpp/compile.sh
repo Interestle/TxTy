@@ -37,5 +37,7 @@ sudo make -j 4
 if [ -e "./main" ]; then
   echo "cp main ../../final/txty"
   cp main ../../final/txty
+
+  cp -r ../../final /home/pi/TxTy/final
 fi
 

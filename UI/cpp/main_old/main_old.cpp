@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 21, 2021
+ * Last updated: November 23, 2021
  */
 
 
@@ -88,7 +88,7 @@ int main(void)
   startTimeoutTick = startSaveTick;
 
   const int32_t fiveMinutes  = 1000000 * 60 * 5;
-  const int32_t timeoutTimer = 1000000 * 30; // 30 seconds
+  int32_t timeoutTimer = (1000000 * 30) | 0x1; // Off by default.
   while (1)
   {
     // Keyboard exclusive characters
@@ -122,6 +122,12 @@ int main(void)
             if(stringToSend == "!clear") savedMessages.clear();
             else if(stringToSend == "!save") saveToFile(savedMessages);
             else if(stringToSend == "!load") loadFromFile(savedMessages);
+            else if(stringToSend == "!timeout")
+            {
+              timeoutTimer ^= 0x1;
+              std::string temp = (timeoutTimer & 0x1) ? "Screen will not turn off." : "Screen will now time out";
+              savedMessages.push_back(temp);
+            }
             else if(stringToSend == "!shutdown")
             { 
               saveToFile(savedMessages);
@@ -191,7 +197,8 @@ int main(void)
 
     // Turn off display after so much time of inactivity.
     endTimeoutTick = gpioTick();
-    if(isScreenOn && ((endTimeoutTick - startTimeoutTick) >= timeoutTimer))
+    int diffTimeoutTick = endTimeoutTick - startTimeoutTick;
+    if(isScreenOn && !(timeoutTimer & 0x1) && (diffTimeoutTick  >= timeoutTimer))
     {
       pwmWrite(LCD_BL, 0);
       isScreenOn = false;
@@ -385,7 +392,7 @@ std::string txtyCommand(std::string& command)
 
   else if(command.find("!help") == 0)
   { // The LCD currently does NOT like newlines!
-    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !bright:#, !clear, !save, !load, !shutdown, !help";
+    return "Available commands: !addr:#, !id:#, !dark, !light, !sendto:#, !font:#, !range, !bright:#, !timeout, !clear, !save, !load, !shutdown, !help";
   }
 
   return "invalid command: " + command;

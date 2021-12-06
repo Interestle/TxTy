@@ -127,6 +127,8 @@ int main(void)
             if(stringToSend == "!clear") savedMessages.clear();
             else if(stringToSend == "!save") saveToFile(savedMessages);
             else if(stringToSend == "!load") loadFromFile(savedMessages);
+            else if(stringToSend == "!d") LCD_down();
+            else if(stringToSend == "!u") LCD_up();
             else if(stringToSend == "!timeout")
             {
               timeoutTimer ^= 0x1;
@@ -175,19 +177,20 @@ int main(void)
     // Additional buttons 
     pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
+    bool buttonTimer = gpioTick() & 0xFFFF == 0;
 
 
-    if(!digitalRead(pageUpPin))//if(pageUp == 0xF0)
+    if((pageUp == 0xF0) || (!digitalRead(pageUpPin) & buttonTimer))
     {
       std::cout << "UP!" << std::endl;
-      LCD_up();
+      LCD_up(); // Nothing is happening anymore when I press a button.
       buttonPushed = true;
     }
 
-    if(!digitalRead(pageDownPin))//if(pageDown == 0xf0)
+    if((pageDown == 0xF0) || (!digitalRead(pageDownPin) & buttonTimer))
     {
       std::cout << "DOWN" << std::endl;
-      LCD_down();
+      LCD_down(); // Nothing is happening anymore when I press a button.
       buttonPushed = true;
     }
 

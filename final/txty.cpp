@@ -177,16 +177,17 @@ int main(void)
     // Additional buttons 
     pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
+    bool buttonTimer = (gpioTick() & 0xF) == 0;
 
 
-    if(!digitalRead(pageUpPin))//if(pageUp == 0xF0)
+    if( (pageUp == 0xF0) || (!(pageUp & 0x1) & buttonTimer) )
     {
       std::cout << "UP!" << std::endl;
       LCD_up(); // Nothing is happening anymore when I press a button.
       buttonPushed = true;
     }
 
-    if(!digitalRead(pageDownPin))//if(pageDown == 0xF0)
+    if((pageDown == 0xF0) || (!(pageDown & 0x1) & buttonTimer))
     {
       std::cout << "DOWN" << std::endl;
       LCD_down(); // Nothing is happening anymore when I press a button.

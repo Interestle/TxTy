@@ -37,8 +37,8 @@
 *		  to display the changes.
 *
 *----------------
-* |	This version:   V2.1
-* | Date        :   2021-11-18
+* |	This version:   V2.3
+* | Date        :   2021-12-6
 * | Info        :
 *
 ******************************************************************************/
@@ -47,7 +47,6 @@
 #ifndef _UI_H_
 #define _UI_H_
 
-//#include "waveshare.h"
 #include "GUI_BMP.h"
 #include <vector>
 #include <string>
@@ -382,7 +381,7 @@ void LCD_select_message_by_index(int message_index)
 	{
 		starting_message = messages.size() - 1;
 	}
-	
+
 	LCD_refresh();
 }
 /*
@@ -391,19 +390,17 @@ void LCD_select_message_by_index(int message_index)
  */
 void LCD_up(void)
 {
-	if (0 >= starting_message)
+	starting_message--;
+
+	if ((0 > starting_message) || (messages.size() == 0))
 	{
 		starting_message = 0;
 	}
-	else if (starting_message < messages.size())
-	{
-		starting_message--;
-	}
-	else
+	else if (starting_message >= messages.size())
 	{
 		starting_message = messages.size() - 1;
 	}
-	
+
 	LCD_refresh();
 
 }
@@ -414,15 +411,13 @@ void LCD_up(void)
  */
 void LCD_down(void)
 {
-	if (0 >= starting_message)
+	starting_message++;
+	
+	if ((0 > starting_message) || (messages.size() == 0))
 	{
 		starting_message = 0;
 	}
-	else if (starting_message < (messages.size() - 1))
-	{
-		starting_message++;
-	}
-	else
+	else if (starting_message >= messages.size())
 	{
 		starting_message = messages.size() - 1;
 	}

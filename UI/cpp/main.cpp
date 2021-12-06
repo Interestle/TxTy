@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: December 5, 2021
+ * Last updated: December 6, 2021
  */
 
 
@@ -89,8 +89,9 @@ int main(void)
   // Various timers.
   uint32_t startSaveTick, endSaveTick; 
   uint32_t startTimeoutTick, endTimeoutTick;
+  uint32_t heldButtonTimer;
   startSaveTick = gpioTick();
-  startTimeoutTick = startSaveTick;
+  heldButtonTimer = startTimeoutTick = startSaveTick;
 
   const int32_t fiveMinutes  = 1000000 * 60 * 5;
   int32_t timeoutTimer = (1000000 * 30) | 0x1; // Off by default.
@@ -177,20 +178,19 @@ int main(void)
     // Additional buttons 
     pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
-    bool buttonTimer = (gpioTick() & 0xF) == 0;
+    bool buttonTimer = (gpioTick() - heldButtonTimer) >= 100000;
 
-
-    if( (pageUp == 0xF0) || (!(pageUp & 0x1) & buttonTimer) )
+    if((pageUp == 0xF0) || (!(pageUp & 0x1) & buttonTimer))
     {
-      std::cout << "UP!" << std::endl;
-      LCD_up(); // Nothing is happening anymore when I press a button.
+      LCD_up(); 
+      heldButtonTimer = gpioTick();
       buttonPushed = true;
     }
 
     if((pageDown == 0xF0) || (!(pageDown & 0x1) & buttonTimer))
     {
-      std::cout << "DOWN" << std::endl;
-      LCD_down(); // Nothing is happening anymore when I press a button.
+      LCD_down(); 
+      heldButtonTimer = gpioTick();
       buttonPushed = true;
     }
 

@@ -3,7 +3,7 @@
  *
  * The team is comprised of Colton Watson, Benjamin Leaprot, Phelan Hobbs, and Seth Jackson
  *
- * Last updated: November 23, 2021
+ * Last updated: December 5, 2021
  */
 
 
@@ -56,16 +56,21 @@ int main(void)
 
   // Initialize additional buttons and controls
   uint8_t pageUp, pageDown;
-  int pageUpPin = physPinToGpio(31);
-  int pageDownPin = physPinToGpio(33);
+  pageUp = pageDown = 0xFF;
+  int pageUpPin = physPinToGpio(38);
+  int pageDownPin = physPinToGpio(40);
   pinMode(pageUpPin, INPUT);
   pinMode(pageDownPin, INPUT);
 
   // Battery indicator is a single pin on the charger, if it is 0,
   // it's gonna die soon (~3.2 V)
   // Tell the battery is low.
-  // int batteryPin = physPinToGpio(TODO:FINDPIN);
-  // pinMode(batteryPin, INPUT);
+  int batteryPin = physPinToGpio(33);
+  pinMode(batteryPin, INPUT);
+
+  // Notification LED
+  int ledPin = physPinToGpio(7);
+  pinMode(ledPin, OUTPUT);
 
   // Various values needed
   std::vector<std::string> savedMessages;
@@ -125,7 +130,7 @@ int main(void)
             else if(stringToSend == "!timeout")
             {
               timeoutTimer ^= 0x1;
-              std::string temp = (timeoutTimer & 0x1) ? "Screen will not turn off." : "Screen will now time out";
+              std::string temp = (timeoutTimer & 0x1) ? "Screen will not time out" : "Screen will now time out";
               savedMessages.push_back(temp);
             }
             else if(stringToSend == "!shutdown")
@@ -163,6 +168,7 @@ int main(void)
     {
        savedMessages.push_back("U" + std::to_string(fromLora.address) + ": " + fromLora.message);
        updateScreen = true;
+       digitalWrite(ledPin, HIGH);
        //TODO: check RSSI/SNR, suggest user switch range if poor or weak?
     }
     
@@ -170,22 +176,25 @@ int main(void)
     pageUp = (pageUp << 1) | digitalRead(pageUpPin); 
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
 
-    if(pageUp == 0x3F)
+
+    if(pageUp == 0xF0)
     {
       LCD_up();
       buttonPushed = true;
     }
 
-    if(pageDown == 0x3F)
+    if(pageDown == 0xf0)
     {
       LCD_down();
       buttonPushed = true;
     }
 
     // Battery Indicator 
-    //if(!digitalRead(batteryPin))
-    //  LCD_battery(20);
-    //  saveToFile(savedMessages);
+    if(!digitalRead(batteryPin))
+    {
+      LCD_battery(20);
+      saveToFile(savedMessages);
+    }
 
     // Save messages every 5 minutes
     endSaveTick = gpioTick();
@@ -208,6 +217,7 @@ int main(void)
     if(buttonPushed)
     {
       startTimeoutTick = gpioTick();
+      digitalWrite(ledPin, LOW);
  
       // If the screen is currently off, turn it on.
       if(!isScreenOn)

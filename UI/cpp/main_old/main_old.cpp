@@ -177,14 +177,16 @@ int main(void)
     pageDown = (pageDown << 1) | digitalRead(pageDownPin);
 
 
-    if(pageUp == 0xF0)
+    if(!digitalRead(pageUpPin))//if(pageUp == 0xF0)
     {
+      std::cout << "UP!" << std::endl;
       LCD_up();
       buttonPushed = true;
     }
 
-    if(pageDown == 0xf0)
+    if(!digitalRead(pageDownPin))//if(pageDown == 0xf0)
     {
+      std::cout << "DOWN" << std::endl;
       LCD_down();
       buttonPushed = true;
     }

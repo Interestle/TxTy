@@ -127,6 +127,8 @@ int main(void)
             if(stringToSend == "!clear") savedMessages.clear();
             else if(stringToSend == "!save") saveToFile(savedMessages);
             else if(stringToSend == "!load") loadFromFile(savedMessages);
+            else if(stringToSend == "!d") LCD_down();
+            else if(stringToSend == "!u") LCD_up();
             else if(stringToSend == "!timeout")
             {
               timeoutTimer ^= 0x1;

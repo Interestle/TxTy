@@ -37,7 +37,7 @@
 *		  to display the changes.
 *
 *----------------
-* |	This version:   V2.3
+* |	This version:   V2.4
 * | Date        :   2021-12-6
 * | Info        :
 *
@@ -392,13 +392,9 @@ void LCD_up(void)
 {
 	starting_message--;
 
-	if ((0 > starting_message) || (messages.size() == 0))
+	if ((0 > starting_message) || (messages.size() == 0) || (starting_message >= messages.size()))
 	{
 		starting_message = 0;
-	}
-	else if (starting_message >= messages.size())
-	{
-		starting_message = messages.size() - 1;
 	}
 
 	LCD_refresh();

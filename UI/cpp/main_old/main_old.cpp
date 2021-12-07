@@ -182,7 +182,6 @@ int main(void)
 
     if((pageUp == 0xF0) || (!(pageUp & 0x1) & buttonTimer))
     {
-      std::cout << "UP!" << std::endl;
       LCD_up(); 
       heldButtonTimer = gpioTick();
       buttonPushed = true;
@@ -190,7 +189,6 @@ int main(void)
 
     if((pageDown == 0xF0) || (!(pageDown & 0x1) & buttonTimer))
     {
-      std::cout << "DOWN" << std::endl;
       LCD_down(); 
       heldButtonTimer = gpioTick();
       buttonPushed = true;

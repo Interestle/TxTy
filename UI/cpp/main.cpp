@@ -65,7 +65,7 @@ int main(void)
   // Battery indicator is a single pin on the charger, if it is 0,
   // it's gonna die soon (~3.2 V)
   // Tell the battery is low.
-  int batteryPin = physPinToGpio(33);
+  int batteryPin = physPinToGpio(37);
   pinMode(batteryPin, INPUT);
 
   // Notification LED

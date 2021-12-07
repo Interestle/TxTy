@@ -37,7 +37,7 @@
 *		  to display the changes.
 *
 *----------------
-* |	This version:   V2.4
+* |	This version:   V2.5
 * | Date        :   2021-12-6
 * | Info        :
 *
@@ -367,9 +367,13 @@ void LCD_battery(int charge)
 	LCD_refresh();
 
 }
+
+/*
+ * Moves to a message in the vertex based on index.
+ */
 void LCD_select_message_by_index(int message_index)
 {
-	if (0 >= message_index)
+	if (0 > message_index)
 	{
 		starting_message = 0;
 	}
@@ -384,17 +388,20 @@ void LCD_select_message_by_index(int message_index)
 
 	LCD_refresh();
 }
+
 /*
  * Changes UI to move up in the text.
  * if already at the first text it won't do anything.
  */
 void LCD_up(void)
 {
-	starting_message--;
-
-	if ((0 > starting_message) || (messages.size() == 0) || (starting_message >= messages.size()))
+	if (0 == starting_message)
 	{
 		starting_message = 0;
+	}
+	else
+	{
+		starting_message--;
 	}
 
 	LCD_refresh();
@@ -408,15 +415,15 @@ void LCD_up(void)
 void LCD_down(void)
 {
 	starting_message++;
-	
-	if ((0 > starting_message) || (messages.size() == 0))
+
+	if (messages.size() == 0)
 	{
 		starting_message = 0;
 	}
 	else if (starting_message >= messages.size())
 	{
 		starting_message = messages.size() - 1;
-	}
+	}	
 	
 	LCD_refresh();
 
@@ -640,18 +647,18 @@ void LCD_refresh(void)
 	}
 	
 	// network ID label
-	std::string netIdLabel = "ID: " + netId;
+	std::string netIdLabel = "ID:" + netId;
 	
-	Paint_DrawRectangle(0, 0, 100, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(0, 0, 80, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
 	Paint_DrawString_EN(10, 10, const_cast<char*>(netIdLabel.c_str()), &Font16,  background_color, draw_color);	
 	
 	// Address label
-	Paint_DrawRectangle(100, 0, 200, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(110, 10, const_cast<char*>(address.c_str()), &Font16, background_color, draw_color);	
+	Paint_DrawRectangle(80, 0, 160, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(90, 10, const_cast<char*>(address.c_str()), &Font16, background_color, draw_color);	
 
 	// Page label
-	Paint_DrawRectangle(200, 0, 260, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-	Paint_DrawString_EN(210, 10, page_label, &Font16, background_color, draw_color);	
+	Paint_DrawRectangle(160, 0, 260, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+	Paint_DrawString_EN(170, 10, page_label, &Font16, background_color, draw_color);	
 
 	// Battery
 	Paint_DrawRectangle(260, 0, 320, 30, draw_color, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
